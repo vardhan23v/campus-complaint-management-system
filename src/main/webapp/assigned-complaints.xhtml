@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!-- Complaints assigned to the logged-in staff member, with status / priority filters. -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Assigned to me</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Work orders</p>
+                <h1>#{assignedComplaintsBean.filter.status eq 'DONE' ? 'Completed work' : 'Assigned to me'}</h1>
+                <p class="lede">Most urgent first. Open a work order to start it, post updates and mark it resolved.</p>
+            </div>
+        </div>
+
+        <h:form id="filterForm">
+            <div class="tabs" role="group" aria-label="Quick filter">
+                <h:commandButton value="Open" action="#{assignedComplaintsBean.showOpen}"
+                                 styleClass="tab #{assignedComplaintsBean.filter.status eq 'OPEN' ? 'is-active' : ''}"/>
+                <h:commandButton value="Completed" action="#{assignedComplaintsBean.showDone}"
+                                 styleClass="tab #{assignedComplaintsBean.filter.status eq 'DONE' ? 'is-active' : ''}"/>
+                <h:commandButton value="All history" action="#{assignedComplaintsBean.showAll}"
+                                 styleClass="tab #{empty assignedComplaintsBean.filter.status ? 'is-active' : ''}"/>
+            </div>
+
+            <div class="filters" role="search" aria-label="Filter tasks">
+                <div class="field">
+                    <h:outputLabel for="status" value="Status"/>
+                    <h:selectOneMenu id="status" value="#{assignedComplaintsBean.filter.status}" styleClass="select">
+                        <f:selectItem itemLabel="All statuses" itemValue=""/>
+                        <f:selectItem itemLabel="Open (assigned or in progress)" itemValue="OPEN"/>
+                        <f:selectItem itemLabel="Assigned" itemValue="ASSIGNED"/>
+                        <f:selectItem itemLabel="In progress" itemValue="IN_PROGRESS"/>
+                        <f:selectItem itemLabel="Resolved" itemValue="RESOLVED"/>
+                        <f:selectItem itemLabel="Closed" itemValue="CLOSED"/>
+                        <f:selectItem itemLabel="Completed (resolved or closed)" itemValue="DONE"/>
+                    </h:selectOneMenu>
+                </div>
+                <div class="field">
+                    <h:outputLabel for="priority" value="Priority"/>
+                    <h:selectOneMenu id="priority" value="#{assignedComplaintsBean.filter.priority}" styleClass="select">
+                        <f:selectItem itemLabel="All priorities" itemValue=""/>
+                        <f:selectItems value="#{lookup.priorities}" var="pr" itemValue="#{pr}" itemLabel="#{lookup.label(pr)}"/>
+                    </h:selectOneMenu>
+                </div>
+                <div class="filter-actions">
+                    <h:commandButton value="Filter" action="#{assignedComplaintsBean.search}" styleClass="btn btn-sm"/>
+                    <h:commandButton value="Clear" action="#{assignedComplaintsBean.clear}" styleClass="btn btn-secondary btn-sm" immediate="true"/>
+                </div>
+            </div>
+        </h:form>
+
+        <section class="card card-flush" aria-label="Tasks">
+            <ui:fragment rendered="#{empty assignedComplaintsBean.complaints}">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="wrench"/>
+                    <ui:param name="heading" value="No tasks here"/>
+                    <ui:param name="text" value="No complaints assigned to you match this filter."/>
+                </ui:decorate>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty assignedComplaintsBean.complaints}">
+                <div class="table-wrap">
+                    <table class="table table-stack">
+                        <thead>
+                            <tr><th scope="col">ID</th><th scope="col">Task</th><th scope="col">Category</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">Reported</th><th scope="col"><span class="sr-only">Action</span></th></tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{assignedComplaintsBean.complaints}" var="c">
+                                <tr>
+                                    <td data-label="ID"><span class="code">#{c.complaintCode}</span></td>
+                                    <td data-label="Task"><span class="cell-title">#{c.title}</span><span class="cell-sub">#{c.block} &#183; #{c.floor} &#183; #{c.location}</span></td>
+                                    <td data-label="Category">#{c.categoryName}</td>
+                                    <td data-label="Priority"><span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span></td>
+                                    <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    <td data-label="Reported" class="nowrap">
+                                        <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                    <td class="cell-actions">
+                                        <h:link outcome="/staff-complaint-details.xhtml" value="#{c.open ? 'Work on it' : 'View'}"
+                                                styleClass="btn #{c.open ? '' : 'btn-secondary'} btn-sm">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="table-count">#{assignedComplaintsBean.complaints.size()} task(s)</p>
+            </ui:fragment>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

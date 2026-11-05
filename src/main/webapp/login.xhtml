@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<ui:composition template="/WEB-INF/templates/public.xhtml">
+    <ui:define name="title">Log in</ui:define>
+    <ui:define name="messages"/>
+
+    <ui:define name="content">
+        <div class="auth">
+            <div class="auth-poster">
+                <div>
+                    <p class="eyebrow">Campus complaint desk</p>
+                    <h2>Every complaint gets a ticket, an owner and an answer.</h2>
+                    <p>Students and faculty report, the complaint cell assigns, maintenance staff resolve.</p>
+                </div>
+                <div class="demo-box">
+                    <p class="eyebrow">Demo accounts</p>
+                    <table>
+                        <tr><td>Administrator</td><td><code>admin@nitte.edu.in</code> / <code>Admin@123</code></td></tr>
+                        <tr><td>Student</td><td><code>ananya.rao@nitte.edu.in</code> / <code>Student@123</code></td></tr>
+                        <tr><td>Maintenance</td><td><code>suresh.poojary@nitte.edu.in</code> / <code>Staff@123</code></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="auth-form">
+                <p class="eyebrow">Welcome back</p>
+                <h1>Log in to your account</h1>
+
+                <h:messages globalOnly="true" layout="list" styleClass="messages" role="status"
+                            infoClass="alert alert-info" errorClass="alert alert-error" warnClass="alert alert-warn"/>
+
+                <h:form id="loginForm">
+                    <div class="field">
+                        <h:outputLabel for="email" value="E-mail address"/>
+                        <h:inputText id="email" value="#{loginBean.email}" styleClass="input"
+                                     required="true" requiredMessage="Please enter your e-mail address."
+                                     p:type="email" p:autocomplete="username" p:autofocus="autofocus"
+                                     p:aria-required="true" p:aria-describedby="loginForm:emailError"/>
+                        <h:message for="email" id="emailError" styleClass="field-error"/>
+                    </div>
+                    <div class="field">
+                        <h:outputLabel for="password" value="Password"/>
+                        <h:inputSecret id="password" value="#{loginBean.password}" styleClass="input"
+                                       required="true" requiredMessage="Please enter your password."
+                                       p:autocomplete="current-password"
+                                       p:aria-required="true" p:aria-describedby="loginForm:passwordError"/>
+                        <h:message for="password" id="passwordError" styleClass="field-error"/>
+                    </div>
+                    <h:commandButton value="Log in" action="#{loginBean.login}" styleClass="btn btn-block"/>
+                </h:form>
+
+                <p class="auth-switch">New here?
+                    <h:link outcome="/register.xhtml" value="Create a student / faculty account"/>.
+                    Maintenance staff accounts are created by the complaint cell.</p>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

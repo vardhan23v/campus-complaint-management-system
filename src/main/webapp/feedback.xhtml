@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!--
+  feedback.xhtml        -> resolved complaints waiting for a rating + feedback already given
+  feedback.xhtml?id=7   -> the rating form for complaint 7
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Feedback</ui:define>
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{feedbackBean.id}"/>
+        <f:viewAction action="#{feedbackBean.load}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Close the loop</p>
+                <h1>Feedback</h1>
+                <p class="lede">Rate the work on your resolved complaints. Your rating goes to the technician and the complaint cell.</p>
+            </div>
+        </div>
+
+        <ui:fragment rendered="#{not empty feedbackBean.selected}">
+            <div class="card" style="margin-bottom: var(--space-5)">
+                <div class="ticket-head">
+                    <span class="code">#{feedbackBean.selected.complaintCode}</span>
+                    <span class="pill pill-#{feedbackBean.selected.statusCss}">#{feedbackBean.selected.statusLabel}</span>
+                </div>
+                <h2>#{feedbackBean.selected.title}</h2>
+                <p class="muted">#{feedbackBean.selected.categoryName} &#183; #{feedbackBean.selected.fullLocation}
+                    &#183; handled by #{empty feedbackBean.selected.assignedStaffName ? 'the maintenance team' : feedbackBean.selected.assignedStaffName}</p>
+
+                <h:form id="feedbackForm">
+                    <div class="field">
+                        <span class="field-label" id="ratingLabel">Your rating <span class="req" aria-hidden="true">*</span></span>
+                        <!-- Plain HTML radios, written 5 to 1 so the CSS can fill the stars to
+                             the left of the hovered one. FeedbackBean reads the "stars" parameter. -->
+                        <div class="stars" role="radiogroup" aria-labelledby="ratingLabel">
+                            <input type="radio" name="stars" id="star5" value="5"/>
+                            <label for="star5" title="5 stars - excellent">&#9733;<span class="sr-only">5 stars, excellent</span></label>
+                            <input type="radio" name="stars" id="star4" value="4"/>
+                            <label for="star4" title="4 stars - good">&#9733;<span class="sr-only">4 stars, good</span></label>
+                            <input type="radio" name="stars" id="star3" value="3"/>
+                            <label for="star3" title="3 stars - okay">&#9733;<span class="sr-only">3 stars, okay</span></label>
+                            <input type="radio" name="stars" id="star2" value="2"/>
+                            <label for="star2" title="2 stars - poor">&#9733;<span class="sr-only">2 stars, poor</span></label>
+                            <input type="radio" name="stars" id="star1" value="1"/>
+                            <label for="star1" title="1 star - very poor">&#9733;<span class="sr-only">1 star, very poor</span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <h:outputLabel for="comments" value="Comments (optional)"/>
+                        <h:inputTextarea id="comments" value="#{feedbackBean.comments}" styleClass="textarea"
+                                         validatorMessage="Comments must not be longer than 1000 characters."
+                                         p:maxlength="1000" p:placeholder="Was it fixed properly? Anything we could do better?">
+                            <f:validateLength maximum="1000"/>
+                        </h:inputTextarea>
+                        <h:message for="comments" styleClass="field-error"/>
+                    </div>
+                    <div class="form-actions">
+                        <h:commandButton value="Submit feedback" action="#{feedbackBean.submit}" styleClass="btn"/>
+                        <h:link outcome="/feedback.xhtml" value="Cancel" styleClass="btn btn-secondary"/>
+                    </div>
+                </h:form>
+            </div>
+        </ui:fragment>
+
+        <div class="grid-2">
+            <section class="card card-flush" aria-labelledby="awaitingTitle">
+                <div class="card-head">
+                    <h2 id="awaitingTitle">Waiting for your rating</h2>
+                    <span class="muted small">#{feedbackBean.awaiting.size()}</span>
+                </div>
+                <ui:fragment rendered="#{empty feedbackBean.awaiting}">
+                    <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                        <ui:param name="icon" value="check"/>
+                        <ui:param name="heading" value="All caught up"/>
+                        <ui:param name="text" value="Resolved complaints appear here until you rate them."/>
+                    </ui:decorate>
+                </ui:fragment>
+                <ui:fragment rendered="#{not empty feedbackBean.awaiting}">
+                    <table class="table table-stack">
+                        <thead><tr><th scope="col">Complaint</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+                        <tbody>
+                            <ui:repeat value="#{feedbackBean.awaiting}" var="c">
+                                <tr class="#{c.id eq feedbackBean.id ? 'is-highlight' : ''}">
+                                    <td data-label="Complaint"><span class="cell-title">#{c.title}</span><span class="cell-sub">#{c.complaintCode}</span></td>
+                                    <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    <td class="cell-actions">
+                                        <h:link outcome="/feedback.xhtml" value="Rate now" styleClass="btn btn-sm">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </ui:fragment>
+            </section>
+
+            <section class="card card-flush" aria-labelledby="givenTitle">
+                <div class="card-head">
+                    <h2 id="givenTitle">Feedback you have given</h2>
+                    <span class="muted small">#{feedbackBean.given.size()}</span>
+                </div>
+                <ui:fragment rendered="#{empty feedbackBean.given}">
+                    <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                        <ui:param name="icon" value="star"/>
+                        <ui:param name="heading" value="No feedback yet"/>
+                        <ui:param name="text" value="Your ratings will be listed here."/>
+                    </ui:decorate>
+                </ui:fragment>
+                <ui:fragment rendered="#{not empty feedbackBean.given}">
+                    <table class="table table-stack">
+                        <thead><tr><th scope="col">Complaint</th><th scope="col">Rating</th><th scope="col">Date</th></tr></thead>
+                        <tbody>
+                            <ui:repeat value="#{feedbackBean.given}" var="f">
+                                <tr>
+                                    <td data-label="Complaint">
+                                        <h:link outcome="/complaint-details.xhtml" value="#{f.complaintTitle}" styleClass="cell-title">
+                                            <f:param name="id" value="#{f.complaintId}"/>
+                                        </h:link>
+                                        <span class="cell-sub">#{f.complaintCode}</span>
+                                    </td>
+                                    <td data-label="Rating"><span class="star-text" aria-label="#{f.rating} out of 5">#{f.stars}</span></td>
+                                    <td data-label="Date" class="nowrap">
+                                        <h:outputText value="#{f.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </ui:fragment>
+            </section>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

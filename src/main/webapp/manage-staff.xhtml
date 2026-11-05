@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!-- Maintenance / support staff accounts (role STAFF). -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Maintenance staff</ui:define>
+
+    <f:metadata>
+        <f:viewAction action="#{accountBean.init('STAFF')}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Directory</p>
+                <h1>Maintenance staff</h1>
+                <p class="lede">The people complaints are assigned to. Only active staff appear in the assignment list.</p>
+            </div>
+        </div>
+        <ui:include src="/WEB-INF/includes/accounts.xhtml">
+            <ui:param name="noun" value="staff member"/>
+        </ui:include>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,39 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets">
+<!--
+  The append-only status history, oldest first. Parameter: history.
+  A remark without a status change is drawn as a hollow dot.
+-->
+<ui:fragment rendered="#{empty history}">
+    <p class="muted">No history has been recorded yet.</p>
+</ui:fragment>
+<ol class="timeline">
+    <ui:repeat value="#{history}" var="entry">
+        <li class="timeline-item dot-#{entry.newStatusCss} #{entry.statusChange ? '' : 'is-remark'}">
+            <span class="timeline-dot" aria-hidden="true"></span>
+            <div class="timeline-head">
+                <ui:fragment rendered="#{entry.statusChange}">
+                    <span class="pill pill-#{entry.newStatusCss}">#{entry.newStatusLabel}</span>
+                    <ui:fragment rendered="#{not empty entry.previousStatus}">
+                        <span class="muted small">from #{entry.previousStatusLabel}</span>
+                    </ui:fragment>
+                </ui:fragment>
+                <ui:fragment rendered="#{not entry.statusChange}">
+                    <strong class="small">Remark</strong>
+                </ui:fragment>
+            </div>
+            <div class="timeline-meta">
+                #{entry.updatedByName} &#183; #{entry.updatedByRoleLabel} &#183;
+                <h:outputText value="#{entry.createdAt}">
+                    <f:convertDateTime type="localDateTime" pattern="dd MMM yyyy, hh:mm a"/>
+                </h:outputText>
+            </div>
+            <ui:fragment rendered="#{not empty entry.remarks}">
+                <p class="timeline-remark">#{entry.remarks}</p>
+            </ui:fragment>
+        </li>
+    </ui:repeat>
+</ol>
+</ui:composition>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!--
+  The reporter's view of one complaint: complaint-details.xhtml?id=7
+  ComplaintService only returns the complaint when it belongs to the
+  logged-in user.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Complaint details</ui:define>
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{complaintDetailsBean.id}"/>
+        <f:viewAction action="#{complaintDetailsBean.load}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <h:link outcome="/my-complaints.xhtml" styleClass="back-link">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-back"/></svg> My complaints
+        </h:link>
+
+        <ui:fragment rendered="#{empty complaintDetailsBean.complaint}">
+            <div class="card">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="search"/>
+                    <ui:param name="heading" value="Complaint not found"/>
+                    <ui:param name="text" value="It may not exist, or it belongs to another account."/>
+                </ui:decorate>
+            </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{not empty complaintDetailsBean.complaint}">
+            <div class="split">
+                <div>
+                    <ui:include src="/WEB-INF/includes/complaint-summary.xhtml">
+                        <ui:param name="complaint" value="#{complaintDetailsBean.complaint}"/>
+                        <ui:param name="showReporter" value="false"/>
+                    </ui:include>
+                </div>
+
+                <div class="stack">
+                    <ui:fragment rendered="#{complaintDetailsBean.complaint.feedbackAllowed}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Your turn</p>
+                            <h3>How did we do?</h3>
+                            <span class="hint">This complaint is #{complaintDetailsBean.complaint.statusLabel.toLowerCase()}. Rate the work in a few seconds.</span>
+                            <h:link outcome="/feedback.xhtml" value="Give feedback" styleClass="btn btn-block">
+                                <f:param name="id" value="#{complaintDetailsBean.complaint.id}"/>
+                            </h:link>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{not empty complaintDetailsBean.feedback}">
+                        <div class="card">
+                            <p class="eyebrow">Your feedback</p>
+                            <p class="star-text" style="font-size: var(--text-xl)" aria-label="#{complaintDetailsBean.feedback.rating} out of 5 stars">#{complaintDetailsBean.feedback.stars}</p>
+                            <ui:fragment rendered="#{not empty complaintDetailsBean.feedback.comments}">
+                                <p class="prose">&#8220;#{complaintDetailsBean.feedback.comments}&#8221;</p>
+                            </ui:fragment>
+                        </div>
+                    </ui:fragment>
+
+                    <section class="card" aria-labelledby="historyTitle">
+                        <div class="card-head">
+                            <h2 id="historyTitle">Status history</h2>
+                            <span class="muted small">#{complaintDetailsBean.history.size()} entries</span>
+                        </div>
+                        <ui:include src="/WEB-INF/includes/timeline.xhtml">
+                            <ui:param name="history" value="#{complaintDetailsBean.history}"/>
+                        </ui:include>
+                    </section>
+                </div>
+            </div>
+        </ui:fragment>
+    </ui:define>
+</ui:composition>
+</html>

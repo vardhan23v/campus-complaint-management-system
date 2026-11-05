@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough"
+      lang="en">
+
+<!--
+  The page template of every signed-in page.
+
+  It defines the ink sidebar (brand, role navigation, user card), the top bar
+  (page title, notification bell), the message area and the footer once.
+  Each page supplies <ui:define name="title"> and <ui:define name="content">.
+  Navigation entries are chosen by role here, but every page is protected
+  again by AuthFilter and every action by the service layer.
+-->
+<h:head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title><ui:insert name="title">Dashboard</ui:insert> &#183; Nitte Resolve</title>
+
+    <!-- Fonts. Every font token in style.css has system fallbacks, so the app
+         still renders correctly on a machine without network access. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap"/>
+
+    <link rel="icon" type="image/svg+xml" href="#{request.contextPath}/resources/img/favicon.svg"/>
+    <meta name="theme-color" content="#2a1530"/>
+    <h:outputStylesheet name="css/style.css"/>
+    <h:outputScript name="js/app.js" target="body"/>
+</h:head>
+
+<h:body>
+<a class="skip-link" href="#main">Skip to content</a>
+<ui:include src="/WEB-INF/includes/icons.xhtml"/>
+
+<div class="app">
+
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+        <h:link outcome="#{loginBean.homeOutcome}" styleClass="brand">
+            <span class="brand-mark" aria-hidden="true">
+                <svg width="22" height="22"><use href="#i-logo"/></svg>
+            </span>
+            <span>
+                <span class="brand-name">Nitte Resolve</span>
+                <span class="brand-tag">Complaint desk</span>
+            </span>
+        </h:link>
+
+        <button type="button" class="menu-toggle" data-menu-toggle="" aria-controls="sidebar" aria-expanded="false">
+            <svg width="20" height="20" aria-hidden="true"><use href="#i-menu"/></svg>
+            <span class="sr-only">Open navigation</span>
+        </button>
+
+        <nav class="nav" aria-label="Main">
+
+            <!-- Student / faculty -->
+            <ui:fragment rendered="#{loginBean.student}">
+                <span class="nav-label">My desk</span>
+                <h:link outcome="/student-dashboard.xhtml" styleClass="nav-link #{view.viewId eq '/student-dashboard.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/student-dashboard.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-home"/></svg> Dashboard
+                </h:link>
+                <h:link outcome="/submit-complaint.xhtml" styleClass="nav-link #{view.viewId eq '/submit-complaint.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/submit-complaint.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-plus"/></svg> New complaint
+                </h:link>
+                <h:link outcome="/my-complaints.xhtml" styleClass="nav-link #{view.viewId eq '/my-complaints.xhtml' or view.viewId eq '/complaint-details.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/my-complaints.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-list"/></svg> My complaints
+                </h:link>
+                <h:link outcome="/feedback.xhtml" styleClass="nav-link #{view.viewId eq '/feedback.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/feedback.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-star"/></svg> Feedback
+                </h:link>
+            </ui:fragment>
+
+            <!-- Administrator -->
+            <ui:fragment rendered="#{loginBean.admin}">
+                <span class="nav-label">Complaint cell</span>
+                <h:link outcome="/admin-dashboard.xhtml" styleClass="nav-link #{view.viewId eq '/admin-dashboard.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/admin-dashboard.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-home"/></svg> Dashboard
+                </h:link>
+                <h:link outcome="/admin-complaints.xhtml" styleClass="nav-link #{view.viewId eq '/admin-complaints.xhtml' or view.viewId eq '/complaint-review.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/admin-complaints.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-inbox"/></svg> All complaints
+                </h:link>
+                <h:link outcome="/reports.xhtml" styleClass="nav-link #{view.viewId eq '/reports.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/reports.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-chart"/></svg> Reports
+                </h:link>
+                <span class="nav-label">Directory</span>
+                <h:link outcome="/manage-users.xhtml" styleClass="nav-link #{view.viewId eq '/manage-users.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/manage-users.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-users"/></svg> Students &amp; faculty
+                </h:link>
+                <h:link outcome="/manage-staff.xhtml" styleClass="nav-link #{view.viewId eq '/manage-staff.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/manage-staff.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-wrench"/></svg> Maintenance staff
+                </h:link>
+                <h:link outcome="/manage-categories.xhtml" styleClass="nav-link #{view.viewId eq '/manage-categories.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/manage-categories.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-tag"/></svg> Categories
+                </h:link>
+            </ui:fragment>
+
+            <!-- Maintenance staff -->
+            <ui:fragment rendered="#{loginBean.staff}">
+                <span class="nav-label">Work orders</span>
+                <h:link outcome="/staff-dashboard.xhtml" styleClass="nav-link #{view.viewId eq '/staff-dashboard.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/staff-dashboard.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-home"/></svg> Dashboard
+                </h:link>
+                <h:link outcome="/assigned-complaints.xhtml" styleClass="nav-link #{view.viewId eq '/assigned-complaints.xhtml' or view.viewId eq '/staff-complaint-details.xhtml' ? 'is-active' : ''}"
+                        p:aria-current="#{view.viewId eq '/assigned-complaints.xhtml' ? 'page' : 'false'}">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-wrench"/></svg> Assigned to me
+                </h:link>
+                <h:link outcome="/assigned-complaints.xhtml" styleClass="nav-link">
+                    <f:param name="status" value="DONE"/>
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg> Completed work
+                </h:link>
+            </ui:fragment>
+
+            <span class="nav-label">Inbox</span>
+            <h:link outcome="/notifications.xhtml" styleClass="nav-link #{view.viewId eq '/notifications.xhtml' ? 'is-active' : ''}"
+                    p:aria-current="#{view.viewId eq '/notifications.xhtml' ? 'page' : 'false'}">
+                <svg width="18" height="18" aria-hidden="true"><use href="#i-bell"/></svg> Notifications
+                <h:outputText value="#{loginBean.unreadCount}" styleClass="nav-count" rendered="#{loginBean.unreadCount gt 0}"/>
+            </h:link>
+        </nav>
+
+        <h:form styleClass="user-card" id="userCard">
+            <span class="avatar" aria-hidden="true">#{loginBean.currentUser.initials}</span>
+            <span class="user-meta">
+                <span class="user-name">#{loginBean.currentUser.name}</span>
+                <span class="user-role">#{loginBean.currentUser.roleLabel}</span>
+            </span>
+            <h:commandButton value="Log out" action="#{loginBean.logout}" styleClass="logout-button"
+                             p:aria-label="Log out of Nitte Resolve"/>
+        </h:form>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-title">
+                #{loginBean.currentUser.roleLabel} &#183; <strong><ui:insert name="title">Dashboard</ui:insert></strong>
+            </div>
+            <div class="topbar-actions">
+                <h:link outcome="/notifications.xhtml" styleClass="bell"
+                        p:aria-label="Notifications, #{loginBean.unreadCount} unread">
+                    <svg width="19" height="19" aria-hidden="true"><use href="#i-bell"/></svg>
+                    <h:outputText value="#{loginBean.unreadCount gt 9 ? '9+' : loginBean.unreadCount}" styleClass="bell-count"
+                                  rendered="#{loginBean.unreadCount gt 0}"/>
+                </h:link>
+            </div>
+        </header>
+
+        <main class="content" id="main" tabindex="-1">
+
+            <ui:insert name="content"/>
+
+            <!-- Message left behind by AuthFilter when a page was opened without permission. -->
+            <h:panelGroup layout="block" styleClass="auth-message" rendered="#{not empty loginBean.authMessage}">
+                <div class="alert alert-error" role="alert">#{loginBean.authMessage}</div>
+            </h:panelGroup>
+
+            <!-- Success and error messages. This block deliberately comes AFTER the
+                 page content in the HTML, because a bean that loads its data while
+                 the content renders adds its message late; CSS shows it on top. -->
+            <h:messages globalOnly="true" layout="list" styleClass="messages" role="status"
+                        infoClass="alert alert-info" errorClass="alert alert-error" warnClass="alert alert-warn"/>
+        </main>
+
+        <footer class="footer">
+            <span>Nitte Resolve &#183; Campus facility complaint management</span>
+            <span>Jakarta Faces 4.0 &#183; CDI &#183; JDBC &#183; MySQL</span>
+        </footer>
+    </div>
+</div>
+</h:body>
+</html>

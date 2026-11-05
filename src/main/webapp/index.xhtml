@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!-- Public landing page. -->
+<ui:composition template="/WEB-INF/templates/public.xhtml">
+    <ui:define name="title">Campus complaint desk</ui:define>
+
+    <ui:define name="content">
+        <section class="hero">
+            <div>
+                <p class="eyebrow">Nitte campus &#183; facilities &amp; services</p>
+                <h1>Report it once. <em>Track it</em> until it&#8217;s fixed.</h1>
+                <p class="lede">A broken bench, a dead Wi-Fi point, a leaking tap: file a complaint in a minute,
+                    get a ticket number, and watch it move from the complaint cell to the maintenance team
+                    and back to you as resolved.</p>
+                <div class="page-actions">
+                    <h:link outcome="/register.xhtml" value="Create a student / faculty account" styleClass="btn"
+                            rendered="#{not loginBean.loggedIn}"/>
+                    <h:link outcome="/login.xhtml" value="Log in" styleClass="btn btn-secondary"
+                            rendered="#{not loginBean.loggedIn}"/>
+                    <h:link outcome="#{loginBean.homeOutcome}" value="Open my dashboard" styleClass="btn"
+                            rendered="#{loginBean.loggedIn}"/>
+                </div>
+            </div>
+
+            <!-- Decorative sample ticket: carries no data, so it is hidden from screen readers. -->
+            <div class="hero-ticket" aria-hidden="true">
+                <span class="code">NIT-2026-00042</span>
+                <h2>Ceiling fan not working, Room 204</h2>
+                <p class="muted">Block A &#183; 2nd floor &#183; Fans and Lighting</p>
+                <div class="ticket-perf"></div>
+                <ol class="rail">
+                    <li class="rail-step is-done"><span class="rail-dot">&#10003;</span><span class="rail-label">Submitted</span></li>
+                    <li class="rail-step is-done"><span class="rail-dot">&#10003;</span><span class="rail-label">Review</span></li>
+                    <li class="rail-step is-done"><span class="rail-dot">&#10003;</span><span class="rail-label">Assigned</span></li>
+                    <li class="rail-step is-current"><span class="rail-dot">4</span><span class="rail-label">In progress</span></li>
+                    <li class="rail-step"><span class="rail-dot">5</span><span class="rail-label">Resolved</span></li>
+                    <li class="rail-step"><span class="rail-dot">6</span><span class="rail-label">Closed</span></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="features" aria-label="How it works">
+            <div class="feature">
+                <span class="feature-num">01 &#8212; Report</span>
+                <h3>Say what and where</h3>
+                <p>Pick a category, the block, floor and room, set a priority and add a photo if it helps.
+                    You get a complaint ID straight away.</p>
+            </div>
+            <div class="feature">
+                <span class="feature-num">02 &#8212; Fix</span>
+                <h3>The right person gets it</h3>
+                <p>The complaint cell reviews it and assigns it to electrical, civil or IT support staff,
+                    who post progress until the job is done.</p>
+            </div>
+            <div class="feature">
+                <span class="feature-num">03 &#8212; Close the loop</span>
+                <h3>Every step on record</h3>
+                <p>Each status change is notified and kept in a permanent history. Rate the work once it
+                    is resolved, so the campus keeps getting better.</p>
+            </div>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                             https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+  <display-name>Nitte Resolve - Campus Complaint Management</display-name>
+
+  <!-- Production stage: users see friendly messages, never stack traces.
+       Switch to Development while debugging a page. -->
+  <context-param>
+    <param-name>jakarta.faces.PROJECT_STAGE</param-name>
+    <param-value>Production</param-value>
+  </context-param>
+
+  <!-- Keep the view state on the server; the hidden ViewState token then also
+       acts as a per-view CSRF token for every postback. -->
+  <context-param>
+    <param-name>jakarta.faces.STATE_SAVING_METHOD</param-name>
+    <param-value>server</param-value>
+  </context-param>
+
+  <context-param>
+    <param-name>jakarta.faces.FACELETS_SKIP_COMMENTS</param-name>
+    <param-value>true</param-value>
+  </context-param>
+
+  <!-- Mojarra lets browsers cache style.css / app.js for 7 days by default;
+       one hour means a redeployed stylesheet shows up the same day. -->
+  <context-param>
+    <param-name>com.sun.faces.defaultResourceMaxAge</param-name>
+    <param-value>3600000</param-value>
+  </context-param>
+
+  <!-- The Jakarta Faces controller servlet handles every *.xhtml request.
+       multipart-config enables <h:inputFile>. The container limit is set
+       well above the 5 MB application limit, so an oversized image reaches
+       FileUploadUtil and gets a readable message instead of a container error. -->
+  <servlet>
+    <servlet-name>FacesServlet</servlet-name>
+    <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+    <multipart-config>
+      <max-file-size>20971520</max-file-size>
+      <max-request-size>22020096</max-request-size>
+      <file-size-threshold>1048576</file-size-threshold>
+    </multipart-config>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>FacesServlet</servlet-name>
+    <url-pattern>*.xhtml</url-pattern>
+  </servlet-mapping>
+
+  <!-- Streams complaint images from the private upload folder after an
+       ownership / assignment / admin check. -->
+  <servlet>
+    <servlet-name>AttachmentServlet</servlet-name>
+    <servlet-class>com.campuscomplaint.servlet.AttachmentServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>AttachmentServlet</servlet-name>
+    <url-pattern>/attachment</url-pattern>
+  </servlet-mapping>
+
+  <!-- Server-side login and role check: hiding a button in the UI is not a check. -->
+  <filter>
+    <filter-name>AuthFilter</filter-name>
+    <filter-class>com.campuscomplaint.filter.AuthFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>AuthFilter</filter-name>
+    <url-pattern>*.xhtml</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
+  <welcome-file-list>
+    <welcome-file>index.xhtml</welcome-file>
+  </welcome-file-list>
+
+  <session-config>
+    <session-timeout>30</session-timeout>
+    <cookie-config>
+      <http-only>true</http-only>
+    </cookie-config>
+    <tracking-mode>COOKIE</tracking-mode>
+  </session-config>
+
+  <!-- Friendly error pages instead of container stack traces. -->
+  <error-page>
+    <exception-type>jakarta.faces.application.ViewExpiredException</exception-type>
+    <location>/login.xhtml</location>
+  </error-page>
+  <error-page>
+    <error-code>404</error-code>
+    <location>/error.xhtml</location>
+  </error-page>
+  <error-page>
+    <error-code>500</error-code>
+    <location>/error.xhtml</location>
+  </error-page>
+  <error-page>
+    <exception-type>java.lang.Throwable</exception-type>
+    <location>/error.xhtml</location>
+  </error-page>
+</web-app>

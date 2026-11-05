@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!--
+  Reports built from MySQL aggregation queries (ReportDAO). The page has a
+  print stylesheet, so "Print / save as PDF" produces a clean report.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Reports</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Complaint cell</p>
+                <h1>Reports</h1>
+                <p class="lede">How many complaints, of what kind, and how fast they get fixed.</p>
+            </div>
+            <div class="page-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.print()">Print / save as PDF</button>
+                <h:link outcome="/admin-complaints.xhtml" value="Complaint register (CSV)" styleClass="btn btn-ghost"/>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat stat-total">
+                <span class="stat-value">#{reportBean.summary.total}</span>
+                <span class="stat-label">Total complaints</span>
+            </div>
+            <div class="stat stat-resolved">
+                <span class="stat-value">#{reportBean.summary.done}</span>
+                <span class="stat-label">Resolved or closed</span>
+            </div>
+            <div class="stat stat-in-progress">
+                <span class="stat-value">#{reportBean.summary.open}</span>
+                <span class="stat-label">Unresolved</span>
+            </div>
+            <div class="stat stat-new">
+                <span class="stat-value">#{reportBean.resolutionRate}%</span>
+                <span class="stat-label">Resolution rate</span>
+            </div>
+            <div class="stat stat-assigned">
+                <span class="stat-value" style="font-size: var(--text-2xl)">#{reportBean.averageResolutionLabel}</span>
+                <span class="stat-label">Avg. time to resolve</span>
+            </div>
+            <div class="stat stat-under-review">
+                <span class="stat-value" style="font-size: var(--text-2xl)">#{reportBean.averageRatingLabel}</span>
+                <span class="stat-label">Avg. feedback rating</span>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <section class="card" aria-labelledby="monthlyTitle">
+                <div class="card-head">
+                    <h2 id="monthlyTitle">Monthly submissions</h2>
+                    <span class="muted small">Last 6 months</span>
+                </div>
+                <div class="vchart" role="img" aria-label="Complaints submitted per month for the last six months">
+                    <ui:repeat value="#{reportBean.monthlyStats}" var="m">
+                        <div class="vbar" title="#{m.label}: #{m.count} submitted, #{m.secondary} resolved">
+                            <span class="vbar-value">#{m.count}</span>
+                            <div class="vbar-fill" style="height: #{m.count * 100 / reportBean.maxMonthly}%">
+                                <span class="vbar-done" style="height: #{m.count eq 0 ? 0 : m.secondary * 100 / m.count}%"></span>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+                <div class="vchart-labels" aria-hidden="true">
+                    <ui:repeat value="#{reportBean.monthlyStats}" var="m"><span>#{m.label}</span></ui:repeat>
+                </div>
+                <div class="chart-key"><span class="key-total">Submitted</span><span>Of which resolved</span></div>
+            </section>
+
+            <section class="card" aria-labelledby="resolvedTitle">
+                <div class="card-head"><h2 id="resolvedTitle">By status</h2></div>
+                <table class="table">
+                    <thead><tr><th scope="col">Status</th><th scope="col">Complaints</th><th scope="col">Share</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="pill pill-submitted">Submitted</span></td><td>#{reportBean.summary.submitted}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.submitted * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                        <tr><td><span class="pill pill-under-review">Under review</span></td><td>#{reportBean.summary.underReview}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.underReview * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                        <tr><td><span class="pill pill-assigned">Assigned</span></td><td>#{reportBean.summary.assigned}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.assigned * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                        <tr><td><span class="pill pill-in-progress">In progress</span></td><td>#{reportBean.summary.inProgress}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.inProgress * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                        <tr><td><span class="pill pill-resolved">Resolved</span></td><td>#{reportBean.summary.resolved}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.resolved * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                        <tr><td><span class="pill pill-closed">Closed</span></td><td>#{reportBean.summary.closed}</td><td>#{reportBean.summary.total eq 0 ? 0 : (reportBean.summary.closed * 100 / reportBean.summary.total).intValue()}%</td></tr>
+                    </tbody>
+                </table>
+                <h3 class="section">Resolved versus unresolved</h3>
+                <div class="bar-track" style="height: 18px" role="img"
+                     aria-label="#{reportBean.resolutionRate} percent resolved or closed">
+                    <span class="bar-fill" style="width: #{reportBean.resolutionRate}%; --bar-color: var(--st-resolved)"></span>
+                </div>
+                <div class="chart-key">
+                    <span style="--primary: var(--st-resolved)">Resolved / closed: #{reportBean.summary.done}</span>
+                    <span class="key-total">Unresolved: #{reportBean.summary.open}</span>
+                </div>
+            </section>
+        </div>
+
+        <div class="grid-2 section">
+            <section class="card" aria-labelledby="catTitle">
+                <div class="card-head"><h2 id="catTitle">Complaints by category</h2></div>
+                <table class="table table-stack">
+                    <thead><tr><th scope="col">Category</th><th scope="col">Total</th><th scope="col">Resolved</th><th scope="col" style="width:35%"><span class="sr-only">Chart</span></th></tr></thead>
+                    <tbody>
+                        <ui:repeat value="#{reportBean.categoryStats}" var="s">
+                            <tr>
+                                <td data-label="Category" class="cell-title">#{s.label}</td>
+                                <td data-label="Total">#{s.count}</td>
+                                <td data-label="Resolved">#{s.secondary}</td>
+                                <td data-label="Share"><span class="bar-track" style="display:block"><span class="bar-fill" style="width: #{s.count * 100 / reportBean.maxCategory}%"></span></span></td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="card" aria-labelledby="prioTitle">
+                <div class="card-head"><h2 id="prioTitle">Complaints by priority</h2></div>
+                <ul class="bars">
+                    <ui:repeat value="#{reportBean.priorityStats}" var="s">
+                        <li class="bar-row">
+                            <span class="bar-label"><span class="prio prio-#{s.css}">#{s.label}</span></span>
+                            <span class="bar-track"><span class="bar-fill prio-#{s.css}" style="width: #{s.percentRounded}%"></span></span>
+                            <span class="bar-value">#{s.count}</span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </section>
+        </div>
+
+        <section class="card card-flush section" aria-labelledby="staffTitle">
+            <div class="card-head"><h2 id="staffTitle">Staff assignment statistics</h2></div>
+            <div class="table-wrap">
+                <table class="table table-stack">
+                    <thead>
+                        <tr><th scope="col">Staff member</th><th scope="col">Assigned</th><th scope="col">Open</th><th scope="col">Resolved</th><th scope="col">Completion</th><th scope="col">Avg. rating</th><th scope="col">Avg. time</th></tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{reportBean.staffStats}" var="s">
+                            <tr>
+                                <td data-label="Staff"><span class="cell-title">#{s.name}</span><span class="cell-sub">#{s.department}</span></td>
+                                <td data-label="Assigned">#{s.totalAssigned}</td>
+                                <td data-label="Open">#{s.openCount}</td>
+                                <td data-label="Resolved">#{s.resolvedCount}</td>
+                                <td data-label="Completion">
+                                    <span style="display:flex;gap:8px;align-items:center"><span class="meter"><span style="width: #{s.completionPercent}%"></span></span>#{s.completionPercent}%</span>
+                                </td>
+                                <td data-label="Avg. rating">
+                                    <h:outputText value="#{s.averageRating}" rendered="#{not empty s.averageRating}"><f:convertNumber maxFractionDigits="1" minFractionDigits="1"/></h:outputText>
+                                    <h:outputText value="&#8212;" rendered="#{empty s.averageRating}"/>
+                                </td>
+                                <td data-label="Avg. time">
+                                    <h:outputText value="#{s.averageResolutionHours}" rendered="#{not empty s.averageResolutionHours}"><f:convertNumber maxFractionDigits="0"/></h:outputText>
+                                    <h:outputText value=" h" rendered="#{not empty s.averageResolutionHours}"/>
+                                    <h:outputText value="&#8212;" rendered="#{empty s.averageResolutionHours}"/>
+                                </td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card card-flush section" aria-labelledby="feedbackTitle">
+            <div class="card-head">
+                <h2 id="feedbackTitle">Feedback from reporters</h2>
+                <span class="muted small">#{reportBean.feedback.size()} response(s)</span>
+            </div>
+            <ui:fragment rendered="#{empty reportBean.feedback}">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="star"/>
+                    <ui:param name="heading" value="No feedback yet"/>
+                    <ui:param name="text" value="Reporters can rate a complaint once it is resolved."/>
+                </ui:decorate>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty reportBean.feedback}">
+                <div class="table-wrap">
+                    <table class="table table-stack">
+                        <thead><tr><th scope="col">Complaint</th><th scope="col">Reporter</th><th scope="col">Handled by</th><th scope="col">Rating</th><th scope="col">Comments</th><th scope="col">Date</th></tr></thead>
+                        <tbody>
+                            <ui:repeat value="#{reportBean.feedback}" var="f">
+                                <tr>
+                                    <td data-label="Complaint">
+                                        <h:link outcome="/complaint-review.xhtml" value="#{f.complaintTitle}" styleClass="cell-title">
+                                            <f:param name="id" value="#{f.complaintId}"/>
+                                        </h:link>
+                                        <span class="cell-sub">#{f.complaintCode} &#183; #{f.categoryName}</span>
+                                    </td>
+                                    <td data-label="Reporter">#{f.studentName}</td>
+                                    <td data-label="Handled by">#{empty f.staffName ? '&#8212;' : f.staffName}</td>
+                                    <td data-label="Rating" class="nowrap"><span class="star-text" aria-label="#{f.rating} out of 5">#{f.stars}</span></td>
+                                    <td data-label="Comments">#{empty f.comments ? '&#8212;' : f.comments}</td>
+                                    <td data-label="Date" class="nowrap">
+                                        <h:outputText value="#{f.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+            </ui:fragment>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

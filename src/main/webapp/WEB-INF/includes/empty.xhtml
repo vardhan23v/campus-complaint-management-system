@@ -1,0 +1,10 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets">
+<!-- Empty state. Parameters: icon (sprite id without "i-"), heading, text. -->
+<div class="empty">
+    <span class="empty-icon" aria-hidden="true"><svg width="26" height="26"><use href="#i-#{icon}"/></svg></span>
+    <h3>#{heading}</h3>
+    <p>#{text}</p>
+    <ui:insert/>
+</div>
+</ui:composition>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Dashboard</ui:define>
+
+    <ui:define name="content">
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">#{empty loginBean.currentUser.department ? 'Maintenance' : loginBean.currentUser.department}</p>
+                <h1>Morning shift, #{loginBean.currentUser.firstName}.</h1>
+                <p>#{staffDashboardBean.summary.assigned} new work order(s) and #{staffDashboardBean.summary.inProgress} in progress. Urgent jobs are listed first.</p>
+            </div>
+            <div class="welcome-action">
+                <h:link outcome="/assigned-complaints.xhtml" styleClass="btn">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-wrench"/></svg> All my tasks
+                </h:link>
+            </div>
+        </section>
+
+        <div class="stats">
+            <h:link outcome="/assigned-complaints.xhtml" styleClass="stat stat-total">
+                <span class="stat-value">#{staffDashboardBean.summary.total}</span>
+                <span class="stat-label">Total assigned</span>
+            </h:link>
+            <h:link outcome="/assigned-complaints.xhtml" styleClass="stat stat-assigned">
+                <f:param name="status" value="ASSIGNED"/>
+                <span class="stat-value">#{staffDashboardBean.summary.assigned}</span>
+                <span class="stat-label">New assignments</span>
+            </h:link>
+            <h:link outcome="/assigned-complaints.xhtml" styleClass="stat stat-in-progress">
+                <f:param name="status" value="IN_PROGRESS"/>
+                <span class="stat-value">#{staffDashboardBean.summary.inProgress}</span>
+                <span class="stat-label">In progress</span>
+            </h:link>
+            <h:link outcome="/assigned-complaints.xhtml" styleClass="stat stat-resolved">
+                <f:param name="status" value="DONE"/>
+                <span class="stat-value">#{staffDashboardBean.summary.done}</span>
+                <span class="stat-label">Resolved</span>
+            </h:link>
+        </div>
+
+        <section aria-labelledby="cardsTitle">
+            <div class="card-head">
+                <h2 id="cardsTitle">Open work orders</h2>
+                <h:link outcome="/assigned-complaints.xhtml" value="View all" styleClass="btn btn-ghost btn-sm"/>
+            </div>
+            <ui:fragment rendered="#{empty staffDashboardBean.taskCards}">
+                <div class="card">
+                    <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                        <ui:param name="icon" value="check"/>
+                        <ui:param name="heading" value="Nothing open right now"/>
+                        <ui:param name="text" value="New assignments from the complaint cell will appear here and in your notifications."/>
+                    </ui:decorate>
+                </div>
+            </ui:fragment>
+            <div class="task-grid">
+                <ui:repeat value="#{staffDashboardBean.taskCards}" var="c">
+                    <h:link outcome="/staff-complaint-details.xhtml" styleClass="task task-#{c.priorityCss}">
+                        <f:param name="id" value="#{c.id}"/>
+                        <span class="task-top">
+                            <span class="code">#{c.complaintCode}</span>
+                            <span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span>
+                        </span>
+                        <span class="task-title">#{c.title}</span>
+                        <span class="task-where">
+                            <svg width="14" height="14" aria-hidden="true" style="vertical-align:-2px"><use href="#i-pin"/></svg>
+                            #{c.block} &#183; #{c.floor} &#183; #{c.location}
+                        </span>
+                        <span class="task-foot">
+                            <span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span>
+                            <span class="muted small">
+                                <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM"/></h:outputText>
+                            </span>
+                        </span>
+                    </h:link>
+                </ui:repeat>
+            </div>
+        </section>
+
+        <section class="card card-flush section" aria-labelledby="tableTitle">
+            <div class="card-head"><h2 id="tableTitle">Task list</h2></div>
+            <ui:fragment rendered="#{empty staffDashboardBean.openTasks}">
+                <p class="table-count">No open tasks.</p>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty staffDashboardBean.openTasks}">
+                <div class="table-wrap">
+                    <table class="table table-stack">
+                        <thead>
+                            <tr><th scope="col">ID</th><th scope="col">Task</th><th scope="col">Category</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">Reported</th><th scope="col"><span class="sr-only">Action</span></th></tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{staffDashboardBean.openTasks}" var="c">
+                                <tr>
+                                    <td data-label="ID"><span class="code">#{c.complaintCode}</span></td>
+                                    <td data-label="Task"><span class="cell-title">#{c.title}</span><span class="cell-sub">#{c.block} &#183; #{c.location}</span></td>
+                                    <td data-label="Category">#{c.categoryName}</td>
+                                    <td data-label="Priority"><span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span></td>
+                                    <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    <td data-label="Reported" class="nowrap">
+                                        <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                    <td class="cell-actions">
+                                        <h:link outcome="/staff-complaint-details.xhtml" value="Open" styleClass="btn btn-secondary btn-sm">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+            </ui:fragment>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!-- Notifications of the logged-in user (any role). -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Notifications</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Inbox</p>
+                <h1>Notifications</h1>
+                <p class="lede">Status changes, assignments, remarks and feedback on your complaints.</p>
+            </div>
+            <h:form styleClass="page-actions">
+                <h:commandButton value="Mark all as read" action="#{notificationBean.markAllRead}"
+                                 styleClass="btn btn-secondary" rendered="#{loginBean.unreadCount gt 0}"/>
+            </h:form>
+        </div>
+
+        <h:form id="notifForm">
+            <div class="tabs" role="group" aria-label="Show">
+                <h:commandButton value="All" action="#{notificationBean.showAll}"
+                                 styleClass="tab #{notificationBean.unreadOnly ? '' : 'is-active'}"/>
+                <h:commandButton value="Unread (#{loginBean.unreadCount})" action="#{notificationBean.showUnread}"
+                                 styleClass="tab #{notificationBean.unreadOnly ? 'is-active' : ''}"/>
+            </div>
+
+            <section class="card card-flush" aria-label="Notification list">
+                <ui:fragment rendered="#{empty notificationBean.notifications}">
+                    <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                        <ui:param name="icon" value="bell"/>
+                        <ui:param name="heading" value="#{notificationBean.unreadOnly ? 'No unread notifications' : 'No notifications yet'}"/>
+                        <ui:param name="text" value="You will be notified here whenever something happens to your complaints."/>
+                    </ui:decorate>
+                </ui:fragment>
+
+                <ul class="notif-list">
+                    <ui:repeat value="#{notificationBean.notifications}" var="n">
+                        <li class="notif #{n.read ? '' : 'is-unread'}">
+                            <span class="notif-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-bell"/></svg></span>
+                            <div>
+                                <p class="notif-title">
+                                    <ui:fragment rendered="#{not n.read}"><span class="sr-only">Unread: </span></ui:fragment>#{n.title}
+                                </p>
+                                <p class="notif-message">#{n.message}</p>
+                                <h:commandButton value="#{empty n.complaintId ? 'Mark as read' : 'Open complaint'}"
+                                                 action="#{notificationBean.open(n)}" styleClass="link-button small"
+                                                 rendered="#{not empty n.complaintId or not n.read}"/>
+                            </div>
+                            <span class="notif-time">
+                                <h:outputText value="#{n.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM, hh:mm a"/></h:outputText>
+                            </span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </section>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</html>

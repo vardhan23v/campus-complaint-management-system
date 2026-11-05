@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!--
+  The complaint form. The page validates required fields and lengths;
+  ComplaintService validates everything again (and the image in depth)
+  before anything is stored.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">New complaint</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Report a problem</p>
+                <h1>New complaint</h1>
+                <p class="lede">Tell us what is wrong and exactly where. You will get a complaint ID to track it.</p>
+            </div>
+        </div>
+
+        <div class="split">
+            <div class="card">
+                <h:form id="complaintForm" enctype="multipart/form-data">
+
+                    <fieldset class="fieldset">
+                        <legend><span class="step-num">1</span> What is the problem?</legend>
+                        <div class="form-grid">
+                            <div class="field span-2">
+                                <h:outputLabel for="title">Complaint title <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:inputText id="title" value="#{complaintBean.form.title}" styleClass="input"
+                                             required="true" requiredMessage="Please give the complaint a short title."
+                                             validatorMessage="The title must be between 5 and 150 characters."
+                                             p:placeholder="e.g. Ceiling fan not working" p:maxlength="150"
+                                             p:aria-required="true" p:aria-describedby="complaintForm:titleError">
+                                    <f:validateLength minimum="5" maximum="150"/>
+                                </h:inputText>
+                                <h:message for="title" id="titleError" styleClass="field-error"/>
+                            </div>
+                            <div class="field span-2">
+                                <h:outputLabel for="category">Category <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:selectOneMenu id="category" value="#{complaintBean.form.categoryId}" styleClass="select"
+                                                 required="true" requiredMessage="Please choose a category."
+                                                 p:aria-required="true" p:aria-describedby="complaintForm:categoryError">
+                                    <f:selectItem itemLabel="Choose a category" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{complaintBean.categories}" var="cat"
+                                                   itemValue="#{cat.id}" itemLabel="#{cat.name}"/>
+                                </h:selectOneMenu>
+                                <h:message for="category" id="categoryError" styleClass="field-error"/>
+                            </div>
+                            <div class="field span-2">
+                                <h:outputLabel for="description">Detailed description <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:inputTextarea id="description" value="#{complaintBean.form.description}" styleClass="textarea"
+                                                 required="true" requiredMessage="Please describe the problem."
+                                                 validatorMessage="The description must be between 15 and 4000 characters."
+                                                 p:placeholder="What happens, since when, and how it affects you." p:maxlength="4000"
+                                                 p:aria-required="true" p:aria-describedby="complaintForm:descriptionHint complaintForm:descriptionError">
+                                    <f:validateLength minimum="15" maximum="4000"/>
+                                </h:inputTextarea>
+                                <span class="hint" id="complaintForm:descriptionHint">At least 15 characters. Mention anything that helps the technician find and fix it.</span>
+                                <h:message for="description" id="descriptionError" styleClass="field-error"/>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend><span class="step-num">2</span> Where is it?</legend>
+                        <div class="form-grid">
+                            <div class="field">
+                                <h:outputLabel for="block">Campus block <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:selectOneMenu id="block" value="#{complaintBean.form.block}" styleClass="select"
+                                                 required="true" requiredMessage="Please choose the block."
+                                                 p:aria-required="true" p:aria-describedby="complaintForm:blockError">
+                                    <f:selectItem itemLabel="Choose a block" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{lookup.blocks}"/>
+                                </h:selectOneMenu>
+                                <h:message for="block" id="blockError" styleClass="field-error"/>
+                            </div>
+                            <div class="field">
+                                <h:outputLabel for="floor">Floor <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:selectOneMenu id="floor" value="#{complaintBean.form.floor}" styleClass="select"
+                                                 required="true" requiredMessage="Please choose the floor."
+                                                 p:aria-required="true" p:aria-describedby="complaintForm:floorError">
+                                    <f:selectItem itemLabel="Choose a floor" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{lookup.floors}"/>
+                                </h:selectOneMenu>
+                                <h:message for="floor" id="floorError" styleClass="field-error"/>
+                            </div>
+                            <div class="field span-2">
+                                <h:outputLabel for="location">Room / classroom / laboratory <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                <h:inputText id="location" value="#{complaintBean.form.location}" styleClass="input"
+                                             required="true" requiredMessage="Please enter the room or exact spot."
+                                             validatorMessage="The location must be between 2 and 120 characters."
+                                             p:placeholder="e.g. Room 204, Physics Lab 2, washroom near the lift" p:maxlength="120"
+                                             p:aria-required="true" p:aria-describedby="complaintForm:locationError">
+                                    <f:validateLength minimum="2" maximum="120"/>
+                                </h:inputText>
+                                <h:message for="location" id="locationError" styleClass="field-error"/>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend><span class="step-num">3</span> How urgent, and is there a photo?</legend>
+                        <div class="field">
+                            <span class="field-label" id="priorityLabel">Priority</span>
+                            <h:selectOneRadio id="priority" value="#{complaintBean.form.priority}" styleClass="choice-row"
+                                              layout="lineDirection" required="true" requiredMessage="Please choose a priority."
+                                              p:aria-labelledby="priorityLabel">
+                                <f:selectItems value="#{lookup.reporterPriorities}" var="pr" itemValue="#{pr}" itemLabel="#{lookup.label(pr)}"/>
+                            </h:selectOneRadio>
+                            <span class="hint">Choose High for problems that stop classes or labs. Safety hazards are escalated to Urgent by the complaint cell.</span>
+                            <h:message for="priority" styleClass="field-error"/>
+                        </div>
+
+                        <div class="field">
+                            <h:outputLabel for="image" value="Supporting image (optional)"/>
+                            <div class="dropzone">
+                                <svg width="28" height="28" aria-hidden="true" style="margin:0 auto"><use href="#i-image"/></svg>
+                                <h:inputFile id="image" value="#{complaintBean.image}"
+                                             p:accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                             p:data-preview="imagePreview" p:data-message="imageMessage"
+                                             p:data-max-bytes="5242880"
+                                             p:aria-describedby="imageHint imageMessage"/>
+                                <span class="hint" id="imageHint">JPG, JPEG or PNG, up to 5 MB.</span>
+                                <span class="field-error" id="imageMessage" role="alert"></span>
+                                <img id="imagePreview" class="preview" alt="Preview of the selected image"/>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-actions">
+                        <h:commandButton value="Submit complaint" action="#{complaintBean.submit}" styleClass="btn"/>
+                        <h:link outcome="/student-dashboard.xhtml" value="Cancel" styleClass="btn btn-secondary"/>
+                    </div>
+                </h:form>
+            </div>
+
+            <aside class="card">
+                <p class="eyebrow">Before you submit</p>
+                <h2>Good complaints get fixed faster</h2>
+                <ul class="feed">
+                    <li><span class="feed-dot" style="--dot-color: var(--primary)"></span><span><strong>Be specific about the spot.</strong> "Third bench from the window, Room 112" beats "classroom".</span></li>
+                    <li><span class="feed-dot" style="--dot-color: var(--st-assigned)"></span><span><strong>One problem per complaint.</strong> Different problems often go to different technicians.</span></li>
+                    <li><span class="feed-dot" style="--dot-color: var(--st-resolved)"></span><span><strong>Add a photo</strong> of the damage if you can do so safely.</span></li>
+                    <li><span class="feed-dot" style="--dot-color: var(--danger)"></span><span><strong>Emergencies first.</strong> For fire, sparking or flooding, alert security in person, then file the complaint.</span></li>
+                </ul>
+                <p class="hint">This desk handles campus facilities and services only &#8212; not police, legal or public grievances.</p>
+            </aside>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

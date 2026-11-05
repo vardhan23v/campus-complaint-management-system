@@ -1,0 +1,13 @@
+# Maven build output
+target/
+
+# Eclipse project metadata
+.settings/
+.project
+.classpath
+.metadata/
+
+# IDE / OS noise
+.idea/
+*.iml
+.DS_Store

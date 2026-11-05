@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!-- Shown for 404s and unexpected errors instead of a container stack trace. -->
+<ui:composition template="/WEB-INF/templates/public.xhtml">
+    <ui:define name="title">Something went wrong</ui:define>
+
+    <ui:define name="content">
+        <div class="error-page card">
+            <p class="error-code">#{empty requestScope['jakarta.servlet.error.status_code'] ? 'Error' : 'Error '.concat(requestScope['jakarta.servlet.error.status_code'])}</p>
+            <h1>#{requestScope['jakarta.servlet.error.status_code'] eq 404 ? 'That page does not exist' : 'Something went wrong'}</h1>
+            <p class="lede">#{requestScope['jakarta.servlet.error.status_code'] eq 404
+                    ? 'The link may be mistyped, or the page has moved.'
+                    : 'The request could not be completed. Please go back and try again in a moment.'}</p>
+            <div class="form-actions" style="justify-content:center">
+                <h:link outcome="#{loginBean.homeOutcome}" value="Go to my dashboard" styleClass="btn"/>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

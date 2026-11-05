@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!-- Every complaint, with search, filters and CSV export (administrator only). -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">All complaints</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Complaint register</p>
+                <h1>All complaints</h1>
+                <p class="lede">Search by ID, title or reporter, then narrow down with the filters.</p>
+            </div>
+            <!-- A download does not leave the page, so this form skips the loading spinner. -->
+            <h:form styleClass="page-actions" p:data-no-loading="true">
+                <h:commandButton value="Export CSV" action="#{adminComplaintBean.exportCsv}" styleClass="btn btn-secondary"
+                                 title="Download the filtered list as a spreadsheet"/>
+            </h:form>
+        </div>
+
+        <h:form id="filterForm" styleClass="filters" p:role="search" p:aria-label="Filter complaints">
+            <div class="field field-wide">
+                <h:outputLabel for="keyword" value="Search ID, title or reporter"/>
+                <h:inputText id="keyword" value="#{adminComplaintBean.filter.keyword}" styleClass="input"
+                             p:type="search" p:placeholder="NIT-2026-00005, fan, Ananya..."/>
+            </div>
+            <div class="field">
+                <h:outputLabel for="status" value="Status"/>
+                <h:selectOneMenu id="status" value="#{adminComplaintBean.filter.status}" styleClass="select">
+                    <f:selectItem itemLabel="All statuses" itemValue=""/>
+                    <f:selectItem itemLabel="Open (not resolved)" itemValue="OPEN"/>
+                    <f:selectItems value="#{lookup.statuses}" var="s" itemValue="#{s}" itemLabel="#{lookup.label(s)}"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="field">
+                <h:outputLabel for="category" value="Category"/>
+                <h:selectOneMenu id="category" value="#{adminComplaintBean.filter.categoryId}" styleClass="select">
+                    <f:selectItem itemLabel="All categories" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{adminComplaintBean.categories}" var="cat" itemValue="#{cat.id}" itemLabel="#{cat.name}"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="field">
+                <h:outputLabel for="priority" value="Priority"/>
+                <h:selectOneMenu id="priority" value="#{adminComplaintBean.filter.priority}" styleClass="select">
+                    <f:selectItem itemLabel="All priorities" itemValue=""/>
+                    <f:selectItems value="#{lookup.priorities}" var="pr" itemValue="#{pr}" itemLabel="#{lookup.label(pr)}"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="field">
+                <h:outputLabel for="staff" value="Assigned staff"/>
+                <h:selectOneMenu id="staff" value="#{adminComplaintBean.filter.assignedStaffId}" styleClass="select">
+                    <f:selectItem itemLabel="Anyone" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{adminComplaintBean.staff}" var="st" itemValue="#{st.id}" itemLabel="#{st.name}"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="field">
+                <h:outputLabel for="from" value="Submitted from"/>
+                <h:inputText id="from" value="#{adminComplaintBean.filter.dateFrom}" styleClass="input" p:type="date"
+                             converterMessage="Use the date picker for the 'from' date.">
+                    <f:convertDateTime type="localDate" pattern="yyyy-MM-dd"/>
+                </h:inputText>
+                <h:message for="from" styleClass="field-error"/>
+            </div>
+            <div class="field">
+                <h:outputLabel for="to" value="Submitted to"/>
+                <h:inputText id="to" value="#{adminComplaintBean.filter.dateTo}" styleClass="input" p:type="date"
+                             converterMessage="Use the date picker for the 'to' date.">
+                    <f:convertDateTime type="localDate" pattern="yyyy-MM-dd"/>
+                </h:inputText>
+                <h:message for="to" styleClass="field-error"/>
+            </div>
+            <div class="field">
+                <span class="field-label">Queue</span>
+                <label class="small" style="display:flex;gap:8px;align-items:center;min-height:38px">
+                    <h:selectBooleanCheckbox value="#{adminComplaintBean.filter.unassignedOnly}"/> Unassigned only
+                </label>
+            </div>
+            <div class="filter-actions">
+                <h:commandButton value="Apply" action="#{adminComplaintBean.search}" styleClass="btn btn-sm"/>
+                <h:commandButton value="Reset" action="#{adminComplaintBean.clear}" styleClass="btn btn-secondary btn-sm" immediate="true"/>
+            </div>
+        </h:form>
+
+        <section class="card card-flush" aria-label="Complaints">
+            <ui:fragment rendered="#{empty adminComplaintBean.complaints}">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="search"/>
+                    <ui:param name="heading" value="No complaints found"/>
+                    <ui:param name="text" value="Nothing matches the current search and filters. Reset them to see every complaint."/>
+                </ui:decorate>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{not empty adminComplaintBean.complaints}">
+                <div class="table-wrap">
+                    <table class="table table-stack">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Complaint</th>
+                                <th scope="col">Reporter</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Assigned to</th>
+                                <th scope="col">Submitted</th>
+                                <th scope="col"><span class="sr-only">Action</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{adminComplaintBean.complaints}" var="c">
+                                <tr>
+                                    <td data-label="ID"><span class="code">#{c.complaintCode}</span></td>
+                                    <td data-label="Complaint">
+                                        <span class="cell-title">#{c.title}</span>
+                                        <span class="cell-sub">#{c.block} &#183; #{c.floor} &#183; #{c.location}</span>
+                                    </td>
+                                    <td data-label="Reporter">#{c.userName}</td>
+                                    <td data-label="Category">#{c.categoryName}</td>
+                                    <td data-label="Priority"><span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span></td>
+                                    <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    <td data-label="Assigned to">#{empty c.assignedStaffName ? '&#8212;' : c.assignedStaffName}</td>
+                                    <td data-label="Submitted" class="nowrap">
+                                        <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                    <td class="cell-actions">
+                                        <h:link outcome="/complaint-review.xhtml" value="Review" styleClass="btn btn-secondary btn-sm">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="table-count">#{adminComplaintBean.complaints.size()} complaint(s)#{adminComplaintBean.filter.active ? ' match the filters' : ''}</p>
+            </ui:fragment>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

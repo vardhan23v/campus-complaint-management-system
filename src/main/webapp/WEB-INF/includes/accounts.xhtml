@@ -1,0 +1,141 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="jakarta.faces.passthrough">
+<!--
+  Account management shared by manage-users.xhtml and manage-staff.xhtml.
+  Parameter: noun (e.g. "staff member"). The role comes from accountBean.init().
+-->
+<h:form id="accountsForm">
+    <div class="filters" role="search" aria-label="Search accounts">
+        <div class="field field-wide">
+            <h:outputLabel for="keyword" value="Search name, e-mail or department"/>
+            <h:inputText id="keyword" value="#{accountBean.keyword}" styleClass="input" p:type="search"/>
+        </div>
+        <div class="filter-actions">
+            <h:commandButton value="Search" action="#{accountBean.search}" styleClass="btn btn-sm"/>
+            <h:commandButton value="Add #{noun}" action="#{accountBean.newAccount}" styleClass="btn btn-secondary btn-sm"
+                             immediate="true" rendered="#{empty accountBean.form}"/>
+        </div>
+    </div>
+</h:form>
+
+<ui:fragment rendered="#{not empty accountBean.form}">
+    <div class="card" style="margin-bottom: var(--space-5)">
+        <div class="card-head">
+            <h2>#{accountBean.form.id eq 0 ? 'Add '.concat(noun) : 'Edit '.concat(accountBean.form.name)}</h2>
+        </div>
+        <h:form id="accountForm">
+            <div class="form-grid">
+                <div class="field">
+                    <h:outputLabel for="name">Full name <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                    <h:inputText id="name" value="#{accountBean.form.name}" styleClass="input" required="true"
+                                 requiredMessage="The name is required." p:maxlength="100"/>
+                    <h:message for="name" styleClass="field-error"/>
+                </div>
+                <div class="field">
+                    <h:outputLabel for="email">E-mail <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                    <h:inputText id="email" value="#{accountBean.form.email}" styleClass="input" required="true"
+                                 requiredMessage="The e-mail address is required." p:type="email" p:maxlength="150"/>
+                    <h:message for="email" styleClass="field-error"/>
+                </div>
+                <div class="field">
+                    <h:outputLabel for="phone" value="Phone"/>
+                    <h:inputText id="phone" value="#{accountBean.form.phone}" styleClass="input" p:type="tel"/>
+                </div>
+                <div class="field">
+                    <h:outputLabel for="department" value="#{accountBean.staffPage ? 'Trade / team' : 'Department / programme'}"/>
+                    <h:inputText id="department" value="#{accountBean.form.department}" styleClass="input"
+                                 p:placeholder="#{accountBean.staffPage ? 'e.g. Electrical Maintenance' : 'e.g. B.E. Mechanical'}"/>
+                </div>
+                <ui:fragment rendered="#{accountBean.form.id eq 0}">
+                    <div class="field">
+                        <h:outputLabel for="password">Initial password <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                        <h:inputSecret id="password" value="#{accountBean.password}" styleClass="input" required="true"
+                                       requiredMessage="An initial password is required." p:autocomplete="new-password"/>
+                        <span class="hint">At least 8 characters with a letter and a digit. Share it with the person securely.</span>
+                        <h:message for="password" styleClass="field-error"/>
+                    </div>
+                </ui:fragment>
+            </div>
+            <div class="form-actions">
+                <h:commandButton value="#{accountBean.form.id eq 0 ? 'Create account' : 'Save changes'}" action="#{accountBean.save}" styleClass="btn"/>
+                <h:commandButton value="Cancel" action="#{accountBean.cancel}" styleClass="btn btn-secondary" immediate="true"/>
+            </div>
+        </h:form>
+    </div>
+</ui:fragment>
+
+<ui:fragment rendered="#{not empty accountBean.resetTarget}">
+    <div class="card" style="margin-bottom: var(--space-5)">
+        <div class="card-head"><h2>Reset password for #{accountBean.resetTarget.name}</h2></div>
+        <h:form id="resetForm">
+            <div class="field" style="max-width: 360px">
+                <h:outputLabel for="newPassword" value="New password"/>
+                <h:inputSecret id="newPassword" value="#{accountBean.newPassword}" styleClass="input" required="true"
+                               requiredMessage="Please enter the new password." p:autocomplete="new-password"/>
+                <span class="hint">At least 8 characters with a letter and a digit.</span>
+                <h:message for="newPassword" styleClass="field-error"/>
+            </div>
+            <div class="form-actions">
+                <h:commandButton value="Reset password" action="#{accountBean.resetPassword}" styleClass="btn"/>
+                <h:commandButton value="Cancel" action="#{accountBean.cancel}" styleClass="btn btn-secondary" immediate="true"/>
+            </div>
+        </h:form>
+    </div>
+</ui:fragment>
+
+<section class="card card-flush" aria-label="Accounts">
+    <ui:fragment rendered="#{empty accountBean.accounts}">
+        <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+            <ui:param name="icon" value="users"/>
+            <ui:param name="heading" value="No accounts found"/>
+            <ui:param name="text" value="Try another search term, or add a new account."/>
+        </ui:decorate>
+    </ui:fragment>
+    <ui:fragment rendered="#{not empty accountBean.accounts}">
+        <h:form id="listForm">
+            <div class="table-wrap">
+                <table class="table table-stack">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Contact</th>
+                            <th scope="col">#{accountBean.staffPage ? 'Trade / team' : 'Department'}</th>
+                            <th scope="col">#{accountBean.staffPage ? 'Assigned' : 'Complaints'}</th>
+                            <th scope="col">Status</th>
+                            <th scope="col"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{accountBean.accounts}" var="u">
+                            <tr class="#{u.active ? '' : 'is-inactive'}">
+                                <td data-label="Name">
+                                    <span class="cell-title">#{u.name}</span>
+                                    <span class="cell-sub">Joined <h:outputText value="#{u.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText></span>
+                                </td>
+                                <td data-label="Contact">#{u.email}<span class="cell-sub">#{empty u.phone ? 'No phone' : u.phone}</span></td>
+                                <td data-label="Department">#{empty u.department ? '&#8212;' : u.department}</td>
+                                <td data-label="#{accountBean.staffPage ? 'Assigned' : 'Complaints'}">#{u.complaintCount}</td>
+                                <td data-label="Status"><span class="tag #{u.active ? 'tag-on' : 'tag-off'}">#{u.active ? 'Active' : 'Deactivated'}</span></td>
+                                <td class="cell-actions">
+                                    <h:commandButton value="Edit" action="#{accountBean.edit(u)}" styleClass="btn btn-ghost btn-sm" immediate="true"/>
+                                    <h:commandButton value="Reset password" action="#{accountBean.startReset(u)}" styleClass="btn btn-ghost btn-sm" immediate="true"/>
+                                    <h:commandButton value="#{u.active ? 'Deactivate' : 'Activate'}" action="#{accountBean.toggleActive(u)}"
+                                                     styleClass="btn #{u.active ? 'btn-danger' : 'btn-secondary'} btn-sm" immediate="true"
+                                                     onclick="#{u.active ? 'return confirm(\'Deactivate this account? The person will not be able to log in.\');' : ''}"/>
+                                    <h:commandButton value="Delete" action="#{accountBean.delete(u)}" styleClass="btn btn-danger btn-sm" immediate="true"
+                                                     rendered="#{u.complaintCount eq 0}"
+                                                     onclick="return confirm('Delete this account permanently? This cannot be undone.');"/>
+                                </td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </div>
+            <p class="table-count">#{accountBean.accounts.size()} account(s), #{accountBean.activeCount} active</p>
+        </h:form>
+    </ui:fragment>
+</section>
+</ui:composition>

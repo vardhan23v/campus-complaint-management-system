@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough"
+      lang="en">
+
+<!--
+  Template of the public pages: index, login, register and the error page.
+-->
+<h:head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title><ui:insert name="title">Campus complaint desk</ui:insert> &#183; Nitte Resolve</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap"/>
+    <link rel="icon" type="image/svg+xml" href="#{request.contextPath}/resources/img/favicon.svg"/>
+    <meta name="theme-color" content="#fbf6ee"/>
+    <h:outputStylesheet name="css/style.css"/>
+    <h:outputScript name="js/app.js" target="body"/>
+</h:head>
+
+<h:body>
+<a class="skip-link" href="#main">Skip to content</a>
+<ui:include src="/WEB-INF/includes/icons.xhtml"/>
+
+<div class="public">
+    <header class="public-header">
+        <h:link outcome="#{loginBean.homeOutcome}" styleClass="brand">
+            <span class="brand-mark" aria-hidden="true">
+                <svg width="22" height="22"><use href="#i-logo"/></svg>
+            </span>
+            <span>
+                <span class="brand-name">Nitte Resolve</span>
+                <span class="brand-tag">Campus complaint desk</span>
+            </span>
+        </h:link>
+        <nav class="public-nav" aria-label="Main">
+            <ui:fragment rendered="#{not loginBean.loggedIn}">
+                <h:link outcome="/login.xhtml" value="Log in" styleClass="btn btn-ghost"
+                        p:aria-current="#{view.viewId eq '/login.xhtml' ? 'page' : 'false'}"/>
+                <h:link outcome="/register.xhtml" value="Create account" styleClass="btn btn-secondary"
+                        p:aria-current="#{view.viewId eq '/register.xhtml' ? 'page' : 'false'}"/>
+            </ui:fragment>
+            <h:link outcome="#{loginBean.homeOutcome}" value="Go to my dashboard" styleClass="btn"
+                    rendered="#{loginBean.loggedIn}"/>
+        </nav>
+    </header>
+
+    <main class="public-main" id="main" tabindex="-1">
+        <!-- Pages that show messages inside their own card define "messages" as empty. -->
+        <ui:insert name="messages">
+            <h:messages globalOnly="true" layout="list" styleClass="messages" role="status"
+                        infoClass="alert alert-info" errorClass="alert alert-error" warnClass="alert alert-warn"/>
+        </ui:insert>
+        <ui:insert name="content"/>
+    </main>
+
+    <footer class="footer">
+        <span>Nitte Resolve &#183; Campus facility complaint management</span>
+        <span>For campus facilities and services only &#8212; not for police, legal or public grievances.</span>
+    </footer>
+</div>
+</h:body>
+</html>

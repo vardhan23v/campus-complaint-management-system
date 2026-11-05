@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Categories</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Directory</p>
+                <h1>Complaint categories</h1>
+                <p class="lede">What reporters can choose on the complaint form. Hide a category to retire it without losing old complaints.</p>
+            </div>
+        </div>
+
+        <div class="split">
+            <section class="card card-flush" aria-label="Categories">
+                <ui:fragment rendered="#{empty categoryBean.categories}">
+                    <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                        <ui:param name="icon" value="tag"/>
+                        <ui:param name="heading" value="No categories"/>
+                        <ui:param name="text" value="Add the first category with the form."/>
+                    </ui:decorate>
+                </ui:fragment>
+                <ui:fragment rendered="#{not empty categoryBean.categories}">
+                    <h:form id="categoryList">
+                        <div class="table-wrap">
+                            <table class="table table-stack">
+                                <thead>
+                                    <tr><th scope="col">Category</th><th scope="col">Complaints</th><th scope="col">On the form</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+                                </thead>
+                                <tbody>
+                                    <ui:repeat value="#{categoryBean.categories}" var="c">
+                                        <tr class="#{c.active ? '' : 'is-inactive'} #{c.id eq categoryBean.form.id ? 'is-highlight' : ''}">
+                                            <td data-label="Category">
+                                                <span class="cell-title">#{c.name}</span>
+                                                <span class="cell-sub">#{c.description}</span>
+                                            </td>
+                                            <td data-label="Complaints">#{c.complaintCount}</td>
+                                            <td data-label="On the form"><span class="tag #{c.active ? 'tag-on' : 'tag-off'}">#{c.active ? 'Visible' : 'Hidden'}</span></td>
+                                            <td class="cell-actions">
+                                                <h:commandButton value="Edit" action="#{categoryBean.edit(c)}" styleClass="btn btn-ghost btn-sm" immediate="true"/>
+                                                <h:commandButton value="#{c.active ? 'Hide' : 'Show'}" action="#{categoryBean.toggleActive(c)}"
+                                                                 styleClass="btn btn-secondary btn-sm" immediate="true"/>
+                                                <h:commandButton value="Delete" action="#{categoryBean.delete(c)}" styleClass="btn btn-danger btn-sm"
+                                                                 immediate="true" rendered="#{c.complaintCount eq 0}"
+                                                                 onclick="return confirm('Delete this category permanently?');"/>
+                                            </td>
+                                        </tr>
+                                    </ui:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                    </h:form>
+                </ui:fragment>
+            </section>
+
+            <aside class="card">
+                <p class="eyebrow">#{categoryBean.editing ? 'Edit category' : 'New category'}</p>
+                <h2>#{categoryBean.editing ? categoryBean.form.name : 'Add a category'}</h2>
+                <h:form id="categoryForm">
+                    <div class="field">
+                        <h:outputLabel for="name">Name <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                        <h:inputText id="name" value="#{categoryBean.form.name}" styleClass="input" required="true"
+                                     requiredMessage="The category name is required."
+                                     validatorMessage="The name must be between 3 and 80 characters." p:maxlength="80">
+                            <f:validateLength minimum="3" maximum="80"/>
+                        </h:inputText>
+                        <h:message for="name" styleClass="field-error"/>
+                    </div>
+                    <div class="field">
+                        <h:outputLabel for="description" value="Description"/>
+                        <h:inputTextarea id="description" value="#{categoryBean.form.description}" styleClass="textarea" rows="3"
+                                         validatorMessage="The description must not be longer than 255 characters." p:maxlength="255">
+                            <f:validateLength maximum="255"/>
+                        </h:inputTextarea>
+                        <h:message for="description" styleClass="field-error"/>
+                    </div>
+                    <div class="form-actions">
+                        <h:commandButton value="#{categoryBean.editing ? 'Save changes' : 'Add category'}" action="#{categoryBean.save}" styleClass="btn"/>
+                        <h:commandButton value="Cancel" action="#{categoryBean.cancel}" styleClass="btn btn-secondary"
+                                         immediate="true" rendered="#{categoryBean.editing}"/>
+                    </div>
+                </h:form>
+            </aside>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

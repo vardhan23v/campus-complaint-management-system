@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!--
+  Self-registration for students and faculty. There is no role field: the
+  account is always a reporter account (role STUDENT), fixed in AuthService.
+-->
+<ui:composition template="/WEB-INF/templates/public.xhtml">
+    <ui:define name="title">Create account</ui:define>
+    <ui:define name="messages"/>
+
+    <ui:define name="content">
+        <div class="auth">
+            <div class="auth-poster">
+                <div>
+                    <p class="eyebrow">For students &amp; faculty</p>
+                    <h2>One account for every classroom, lab, hostel and bus on campus.</h2>
+                    <p>Report facility problems, follow each one from submission to resolution, and rate the work when it is done.</p>
+                </div>
+                <p class="small">Passwords are stored as salted PBKDF2 hashes, never in plain text.</p>
+            </div>
+
+            <div class="auth-form">
+                <p class="eyebrow">Create account</p>
+                <h1>Join the complaint desk</h1>
+
+                <h:messages globalOnly="true" layout="list" styleClass="messages" role="status"
+                            infoClass="alert alert-info" errorClass="alert alert-error" warnClass="alert alert-warn"/>
+
+                <h:form id="registerForm">
+                    <div class="form-grid">
+                        <div class="field span-2">
+                            <h:outputLabel for="name">Full name <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                            <h:inputText id="name" value="#{registerBean.name}" styleClass="input"
+                                         required="true" requiredMessage="Please enter your full name."
+                                         validatorMessage="The name must be between 3 and 100 characters."
+                                         p:autocomplete="name" p:aria-required="true"
+                                         p:aria-describedby="registerForm:nameError">
+                                <f:validateLength minimum="3" maximum="100"/>
+                            </h:inputText>
+                            <h:message for="name" id="nameError" styleClass="field-error"/>
+                        </div>
+                        <div class="field span-2">
+                            <h:outputLabel for="email">College e-mail <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                            <h:inputText id="email" value="#{registerBean.email}" styleClass="input"
+                                         required="true" requiredMessage="Please enter your e-mail address."
+                                         p:type="email" p:autocomplete="email" p:aria-required="true"
+                                         p:aria-describedby="registerForm:emailError"/>
+                            <h:message for="email" id="emailError" styleClass="field-error"/>
+                        </div>
+                        <div class="field">
+                            <h:outputLabel for="phone" value="Phone (optional)"/>
+                            <h:inputText id="phone" value="#{registerBean.phone}" styleClass="input"
+                                         p:type="tel" p:autocomplete="tel" p:placeholder="+91 98450 12345"/>
+                        </div>
+                        <div class="field">
+                            <h:outputLabel for="department" value="Department / programme (optional)"/>
+                            <h:inputText id="department" value="#{registerBean.department}" styleClass="input"
+                                         p:placeholder="e.g. B.E. Computer Science"/>
+                        </div>
+                        <div class="field">
+                            <h:outputLabel for="password">Password <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                            <h:inputSecret id="password" value="#{registerBean.password}" styleClass="input"
+                                           required="true" requiredMessage="Please choose a password."
+                                           p:autocomplete="new-password" p:aria-required="true"
+                                           p:aria-describedby="registerForm:passwordHint registerForm:passwordError"/>
+                            <span class="hint" id="registerForm:passwordHint">At least 8 characters with a letter and a digit.</span>
+                            <h:message for="password" id="passwordError" styleClass="field-error"/>
+                        </div>
+                        <div class="field">
+                            <h:outputLabel for="confirm">Confirm password <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                            <h:inputSecret id="confirm" value="#{registerBean.confirmPassword}" styleClass="input"
+                                           required="true" requiredMessage="Please repeat the password."
+                                           p:autocomplete="new-password" p:aria-required="true"
+                                           p:aria-describedby="registerForm:confirmError"/>
+                            <h:message for="confirm" id="confirmError" styleClass="field-error"/>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <h:commandButton value="Create account" action="#{registerBean.register}" styleClass="btn btn-block"/>
+                    </div>
+                </h:form>
+
+                <p class="auth-switch">Already registered? <h:link outcome="/login.xhtml" value="Log in"/>.</p>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

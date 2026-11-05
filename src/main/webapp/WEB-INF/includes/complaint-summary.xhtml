@@ -1,0 +1,88 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets">
+<!--
+  The body of a complaint shared by the three detail pages: code, status,
+  title, status rail, key facts, description and the supporting image.
+  Parameters: complaint, showReporter (boolean).
+-->
+<div class="card">
+    <div class="ticket-head">
+        <span class="code code-lg">#{complaint.complaintCode}</span>
+        <span class="pill pill-#{complaint.statusCss}">#{complaint.statusLabel}</span>
+        <span class="prio prio-#{complaint.priorityCss}">#{complaint.priorityLabel} priority</span>
+    </div>
+    <h1>#{complaint.title}</h1>
+
+    <div class="section">
+        <ui:include src="/WEB-INF/includes/status-rail.xhtml">
+            <ui:param name="complaint" value="#{complaint}"/>
+        </ui:include>
+    </div>
+
+    <dl class="facts">
+        <div>
+            <dt>Category</dt>
+            <dd>#{complaint.categoryName}</dd>
+        </div>
+        <div>
+            <dt>Location</dt>
+            <dd>#{complaint.block}<span class="cell-sub">#{complaint.floor} &#183; #{complaint.location}</span></dd>
+        </div>
+        <ui:fragment rendered="#{showReporter}">
+            <div>
+                <dt>Reported by</dt>
+                <dd>#{complaint.userName}<span class="cell-sub">#{complaint.userEmail}</span></dd>
+            </div>
+        </ui:fragment>
+        <div>
+            <dt>Submitted</dt>
+            <dd>
+                <h:outputText value="#{complaint.createdAt}">
+                    <f:convertDateTime type="localDateTime" pattern="dd MMM yyyy, hh:mm a"/>
+                </h:outputText>
+            </dd>
+        </div>
+        <div>
+            <dt>Assigned to</dt>
+            <dd>#{empty complaint.assignedStaffName ? 'Not assigned yet' : complaint.assignedStaffName}</dd>
+        </div>
+        <ui:fragment rendered="#{not empty complaint.resolvedAt}">
+            <div>
+                <dt>Resolved</dt>
+                <dd>
+                    <h:outputText value="#{complaint.resolvedAt}">
+                        <f:convertDateTime type="localDateTime" pattern="dd MMM yyyy, hh:mm a"/>
+                    </h:outputText>
+                </dd>
+            </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty complaint.closedAt}">
+            <div>
+                <dt>Closed</dt>
+                <dd>
+                    <h:outputText value="#{complaint.closedAt}">
+                        <f:convertDateTime type="localDateTime" pattern="dd MMM yyyy, hh:mm a"/>
+                    </h:outputText>
+                </dd>
+            </div>
+        </ui:fragment>
+    </dl>
+
+    <h2>Description</h2>
+    <p class="prose">#{complaint.description}</p>
+
+    <h2 class="section">Supporting image</h2>
+    <ui:fragment rendered="#{complaint.hasAttachment}">
+        <a class="evidence" href="#{request.contextPath}/attachment?id=#{complaint.id}" target="_blank" rel="noopener">
+            <img src="#{request.contextPath}/attachment?id=#{complaint.id}"
+                 alt="Photo attached to complaint #{complaint.complaintCode}" loading="lazy"/>
+        </a>
+        <p class="hint">Select the image to open it at full size.</p>
+    </ui:fragment>
+    <ui:fragment rendered="#{not complaint.hasAttachment}">
+        <p class="muted">No image was attached to this complaint.</p>
+    </ui:fragment>
+</div>
+</ui:composition>

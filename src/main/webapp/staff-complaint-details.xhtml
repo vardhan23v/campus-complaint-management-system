@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!--
+  One work order for the assigned staff member: staff-complaint-details.xhtml?id=7
+  StaffService refuses complaints assigned to anyone else.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Work order</ui:define>
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{staffComplaintBean.id}"/>
+        <f:viewAction action="#{staffComplaintBean.load}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <h:link outcome="/assigned-complaints.xhtml" styleClass="back-link">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-back"/></svg> My tasks
+        </h:link>
+
+        <ui:fragment rendered="#{empty staffComplaintBean.complaint}">
+            <div class="card">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="wrench"/>
+                    <ui:param name="heading" value="Work order not available"/>
+                    <ui:param name="text" value="This complaint is not assigned to you, or it has been moved to another staff member."/>
+                </ui:decorate>
+            </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{not empty staffComplaintBean.complaint}">
+            <div class="split">
+                <div class="stack">
+                    <ui:include src="/WEB-INF/includes/complaint-summary.xhtml">
+                        <ui:param name="complaint" value="#{staffComplaintBean.complaint}"/>
+                        <ui:param name="showReporter" value="true"/>
+                    </ui:include>
+                    <section class="card" aria-labelledby="historyTitle">
+                        <div class="card-head"><h2 id="historyTitle">Status history</h2></div>
+                        <ui:include src="/WEB-INF/includes/timeline.xhtml">
+                            <ui:param name="history" value="#{staffComplaintBean.history}"/>
+                        </ui:include>
+                    </section>
+                </div>
+
+                <aside class="stack" aria-label="Actions">
+                    <ui:fragment rendered="#{staffComplaintBean.canStart}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Next step</p>
+                            <h3>Start work</h3>
+                            <span class="hint">Moves the complaint to In progress and tells the reporter.</span>
+                            <h:form id="startForm">
+                                <div class="field">
+                                    <h:outputLabel for="startNote" value="First note (optional)"/>
+                                    <h:inputTextarea id="startNote" value="#{staffComplaintBean.startNote}" styleClass="textarea" rows="2"
+                                                     p:maxlength="1000" p:placeholder="e.g. Inspected - replacement part needed"/>
+                                </div>
+                                <h:commandButton value="Start work" action="#{staffComplaintBean.startWork}" styleClass="btn btn-block"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{staffComplaintBean.canResolve}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Done?</p>
+                            <h3>Mark as resolved</h3>
+                            <span class="hint">Describe what you fixed. The reporter will be asked to rate the work.</span>
+                            <h:form id="resolveForm">
+                                <div class="field">
+                                    <h:outputLabel for="resolution">Work done <span class="req" aria-hidden="true">*</span></h:outputLabel>
+                                    <h:inputTextarea id="resolution" value="#{staffComplaintBean.resolution}" styleClass="textarea" rows="3"
+                                                     required="true" requiredMessage="Please describe the work done."
+                                                     validatorMessage="Please write at least 5 characters (max 1000)."
+                                                     p:maxlength="1000" p:placeholder="e.g. Replaced the capacitor and tested at all speeds">
+                                        <f:validateLength minimum="5" maximum="1000"/>
+                                    </h:inputTextarea>
+                                    <h:message for="resolution" styleClass="field-error"/>
+                                </div>
+                                <h:commandButton value="Mark resolved" action="#{staffComplaintBean.resolve}" styleClass="btn btn-success btn-block"
+                                                 onclick="return confirm('Mark this complaint as resolved?');"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{staffComplaintBean.canUpdate}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Progress</p>
+                            <h3>Post a work update</h3>
+                            <span class="hint">Recorded in the history and sent to the reporter. The status does not change.</span>
+                            <h:form id="updateForm">
+                                <div class="field">
+                                    <h:outputLabel for="update" value="Update" styleClass="sr-only"/>
+                                    <h:inputTextarea id="update" value="#{staffComplaintBean.update}" styleClass="textarea" rows="3"
+                                                     required="true" requiredMessage="Please write the update first."
+                                                     p:maxlength="1000" p:placeholder="e.g. Spare part ordered, expected Thursday"/>
+                                    <h:message for="update" styleClass="field-error"/>
+                                </div>
+                                <h:commandButton value="Post update" action="#{staffComplaintBean.postUpdate}" styleClass="btn btn-secondary btn-block"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{not staffComplaintBean.complaint.open}">
+                        <div class="card">
+                            <p class="eyebrow">#{staffComplaintBean.complaint.statusLabel}</p>
+                            <p class="muted">This work order is complete. #{staffComplaintBean.complaint.status eq 'RESOLVED' ? 'The complaint cell will verify and close it.' : ''}</p>
+                            <ui:fragment rendered="#{not empty staffComplaintBean.feedback}">
+                                <p class="eyebrow section">Reporter feedback</p>
+                                <p class="star-text" style="font-size: var(--text-xl)" aria-label="#{staffComplaintBean.feedback.rating} out of 5 stars">#{staffComplaintBean.feedback.stars}</p>
+                                <p class="prose">#{staffComplaintBean.feedback.comments}</p>
+                            </ui:fragment>
+                        </div>
+                    </ui:fragment>
+                </aside>
+            </div>
+        </ui:fragment>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!-- Student and faculty accounts (role STUDENT). -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Students &amp; faculty</ui:define>
+
+    <f:metadata>
+        <f:viewAction action="#{accountBean.init('STUDENT')}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Directory</p>
+                <h1>Students &amp; faculty</h1>
+                <p class="lede">Accounts that report complaints. Deactivate an account to block its login while keeping its complaint history.</p>
+            </div>
+        </div>
+        <ui:include src="/WEB-INF/includes/accounts.xhtml">
+            <ui:param name="noun" value="account"/>
+        </ui:include>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!-- The reporter's own complaints. The service scopes the query to the session user. -->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">My complaints</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Tracking</p>
+                <h1>My complaints</h1>
+                <p class="lede">Every complaint you have filed, with its current status.</p>
+            </div>
+            <div class="page-actions">
+                <h:link outcome="/submit-complaint.xhtml" styleClass="btn">
+                    <svg width="18" height="18" aria-hidden="true"><use href="#i-plus"/></svg> New complaint
+                </h:link>
+            </div>
+        </div>
+
+        <h:form id="filterForm" styleClass="filters" p:role="search" p:aria-label="Filter my complaints">
+            <div class="field field-wide">
+                <h:outputLabel for="keyword" value="Search by complaint ID or title"/>
+                <h:inputText id="keyword" value="#{myComplaintsBean.filter.keyword}" styleClass="input"
+                             p:type="search" p:placeholder="e.g. NIT-2026-00005 or fan"/>
+            </div>
+            <div class="field">
+                <h:outputLabel for="status" value="Status"/>
+                <h:selectOneMenu id="status" value="#{myComplaintsBean.filter.status}" styleClass="select">
+                    <f:selectItem itemLabel="All statuses" itemValue=""/>
+                    <f:selectItem itemLabel="Pending (not yet resolved)" itemValue="OPEN"/>
+                    <f:selectItems value="#{lookup.statuses}" var="s" itemValue="#{s}" itemLabel="#{lookup.label(s)}"/>
+                    <f:selectItem itemLabel="Resolved or closed" itemValue="DONE"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="field">
+                <h:outputLabel for="category" value="Category"/>
+                <h:selectOneMenu id="category" value="#{myComplaintsBean.filter.categoryId}" styleClass="select">
+                    <f:selectItem itemLabel="All categories" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{myComplaintsBean.categories}" var="cat" itemValue="#{cat.id}" itemLabel="#{cat.name}"/>
+                </h:selectOneMenu>
+            </div>
+            <div class="filter-actions">
+                <h:commandButton value="Search" action="#{myComplaintsBean.search}" styleClass="btn btn-sm"/>
+                <h:commandButton value="Clear" action="#{myComplaintsBean.clear}" styleClass="btn btn-secondary btn-sm" immediate="true"/>
+            </div>
+        </h:form>
+
+        <section class="card card-flush" aria-label="Complaint list">
+            <ui:fragment rendered="#{empty myComplaintsBean.complaints}">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="search"/>
+                    <ui:param name="heading" value="#{myComplaintsBean.filter.active ? 'No complaints match these filters' : 'You have not filed any complaints'}"/>
+                    <ui:param name="text" value="#{myComplaintsBean.filter.active ? 'Try another search term or clear the filters.' : 'Report a broken fan, a Wi-Fi problem or anything else that needs fixing.'}"/>
+                    <h:link outcome="/submit-complaint.xhtml" value="Report a problem" styleClass="btn btn-sm"
+                            rendered="#{not myComplaintsBean.filter.active}"/>
+                </ui:decorate>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{not empty myComplaintsBean.complaints}">
+                <div class="table-wrap">
+                    <table class="table table-stack">
+                        <thead>
+                            <tr>
+                                <th scope="col">Complaint ID</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Submitted</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Status</th>
+                                <th scope="col"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{myComplaintsBean.complaints}" var="c">
+                                <tr class="#{c.complaintCode eq myComplaintsBean.highlight ? 'is-highlight' : ''}">
+                                    <td data-label="ID"><span class="code">#{c.complaintCode}</span></td>
+                                    <td data-label="Title">
+                                        <span class="cell-title">#{c.title}</span>
+                                        <span class="cell-sub">#{c.block} &#183; #{c.location}</span>
+                                    </td>
+                                    <td data-label="Category">#{c.categoryName}</td>
+                                    <td data-label="Submitted" class="nowrap">
+                                        <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy"/></h:outputText>
+                                    </td>
+                                    <td data-label="Priority"><span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span></td>
+                                    <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    <td class="cell-actions">
+                                        <h:link outcome="/feedback.xhtml" value="Rate" styleClass="btn btn-ghost btn-sm"
+                                                rendered="#{c.feedbackAllowed}">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                        <h:link outcome="/complaint-details.xhtml" value="View details" styleClass="btn btn-secondary btn-sm">
+                                            <f:param name="id" value="#{c.id}"/>
+                                        </h:link>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="table-count">#{myComplaintsBean.complaints.size()} complaint(s)</p>
+            </ui:fragment>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

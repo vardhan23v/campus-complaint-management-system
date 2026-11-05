@@ -1,0 +1,18 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets">
+<!--
+  The six-step lifecycle track. Parameter: complaint.
+  Steps before the current status are done; the current one is highlighted.
+  A closed complaint shows every step as done.
+-->
+<ol class="rail" aria-label="Complaint progress: #{complaint.statusLabel}">
+    <ui:repeat value="#{lookup.statuses}" var="step" varStatus="s">
+        <li class="rail-step #{s.index lt complaint.statusStep or complaint.status eq 'CLOSED' ? 'is-done' : (s.index eq complaint.statusStep ? 'is-current' : '')}"
+            aria-current="#{s.index eq complaint.statusStep ? 'step' : 'false'}">
+            <span class="rail-dot" aria-hidden="true">#{s.index lt complaint.statusStep or complaint.status eq 'CLOSED' ? '&#10003;' : s.index + 1}</span>
+            <span class="rail-label">#{lookup.label(step)}</span>
+        </li>
+    </ui:repeat>
+</ol>
+</ui:composition>

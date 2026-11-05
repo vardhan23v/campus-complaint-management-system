@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JSF configuration.
+
+  Only the logout navigation rule lives here. Login picks the dashboard of
+  the user's role in LoginBean, and every other page change uses implicit
+  navigation with ?faces-redirect=true. There are no <managed-bean> entries:
+  Jakarta Faces 4.0 removed them, backing beans are CDI beans (@Named).
+-->
+<faces-config xmlns="https://jakarta.ee/xml/ns/jakartaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                                  https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_0.xsd"
+              version="4.0">
+
+  <navigation-rule>
+    <navigation-case>
+      <from-outcome>logout</from-outcome>
+      <to-view-id>/login.xhtml</to-view-id>
+      <redirect/>
+    </navigation-case>
+  </navigation-rule>
+</faces-config>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+
+<!--
+  Administrator dashboard. The charts are plain HTML/CSS: the donut is a CSS
+  conic-gradient built by AdminDashboardBean, the bars are widths in percent.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Dashboard</ui:define>
+
+    <ui:define name="content">
+        <div class="page-head">
+            <div>
+                <p class="eyebrow">Complaint cell</p>
+                <h1>Good to see you, #{loginBean.currentUser.firstName}.</h1>
+                <p class="lede">#{adminDashboardBean.summary.submitted} new, #{adminDashboardBean.awaitingAssignment.size()} waiting for assignment,
+                    #{adminDashboardBean.submittedToday} submitted today.</p>
+            </div>
+            <div class="page-actions">
+                <h:link outcome="/admin-complaints.xhtml" styleClass="btn">
+                    <f:param name="queue" value="unassigned"/>
+                    Assignment queue
+                </h:link>
+                <h:link outcome="/reports.xhtml" value="Reports" styleClass="btn btn-secondary"/>
+            </div>
+        </div>
+
+        <div class="stats">
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-total">
+                <span class="stat-value">#{adminDashboardBean.summary.total}</span>
+                <span class="stat-label">Total complaints</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-submitted">
+                <f:param name="status" value="SUBMITTED"/>
+                <span class="stat-value">#{adminDashboardBean.summary.submitted}</span>
+                <span class="stat-label">New</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-under-review">
+                <f:param name="status" value="UNDER_REVIEW"/>
+                <span class="stat-value">#{adminDashboardBean.summary.underReview}</span>
+                <span class="stat-label">Under review</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-assigned">
+                <f:param name="status" value="ASSIGNED"/>
+                <span class="stat-value">#{adminDashboardBean.summary.assigned}</span>
+                <span class="stat-label">Assigned</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-in-progress">
+                <f:param name="status" value="IN_PROGRESS"/>
+                <span class="stat-value">#{adminDashboardBean.summary.inProgress}</span>
+                <span class="stat-label">In progress</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-resolved">
+                <f:param name="status" value="RESOLVED"/>
+                <span class="stat-value">#{adminDashboardBean.summary.resolved}</span>
+                <span class="stat-label">Resolved</span>
+            </h:link>
+            <h:link outcome="/admin-complaints.xhtml" styleClass="stat stat-closed">
+                <f:param name="status" value="CLOSED"/>
+                <span class="stat-value">#{adminDashboardBean.summary.closed}</span>
+                <span class="stat-label">Closed</span>
+            </h:link>
+        </div>
+
+        <div class="grid-3">
+            <section class="card" aria-labelledby="statusTitle">
+                <div class="card-head"><h2 id="statusTitle">Status distribution</h2></div>
+                <div class="donut-wrap">
+                    <div class="donut" style="background: conic-gradient(#{adminDashboardBean.statusGradient})"
+                         role="img" aria-label="Status distribution of #{adminDashboardBean.summary.total} complaints">
+                        <div class="donut-center"><strong>#{adminDashboardBean.summary.total}</strong><span>complaints</span></div>
+                    </div>
+                    <ul class="legend">
+                        <ui:repeat value="#{adminDashboardBean.statusRows}" var="row">
+                            <li class="dot-#{row.css}"><span class="legend-swatch"></span>#{row.label}<span class="legend-value">#{row.count}</span></li>
+                        </ui:repeat>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="categoryTitle">
+                <div class="card-head"><h2 id="categoryTitle">By category</h2></div>
+                <ui:fragment rendered="#{empty adminDashboardBean.categoryStats}">
+                    <p class="muted">No complaints yet.</p>
+                </ui:fragment>
+                <ul class="bars">
+                    <ui:repeat value="#{adminDashboardBean.categoryStats}" var="s">
+                        <li class="bar-row">
+                            <span class="bar-label" title="#{s.label}">#{s.label}</span>
+                            <span class="bar-track"><span class="bar-fill" style="width: #{s.count * 100 / adminDashboardBean.maxCategory}%"></span></span>
+                            <span class="bar-value">#{s.count}</span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </section>
+
+            <section class="card" aria-labelledby="priorityTitle">
+                <div class="card-head"><h2 id="priorityTitle">By priority</h2></div>
+                <ul class="bars">
+                    <ui:repeat value="#{adminDashboardBean.priorityStats}" var="s">
+                        <li class="bar-row">
+                            <span class="bar-label"><span class="prio prio-#{s.css}">#{s.label}</span></span>
+                            <span class="bar-track"><span class="bar-fill prio-#{s.css}" style="width: #{s.percentRounded}%"></span></span>
+                            <span class="bar-value">#{s.count}</span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </section>
+        </div>
+
+        <div class="split section">
+            <div class="stack">
+                <section class="card card-flush" aria-labelledby="queueTitle">
+                    <div class="card-head">
+                        <h2 id="queueTitle">Awaiting assignment</h2>
+                        <h:link outcome="/admin-complaints.xhtml" value="Open queue" styleClass="btn btn-ghost btn-sm">
+                            <f:param name="queue" value="unassigned"/>
+                        </h:link>
+                    </div>
+                    <ui:fragment rendered="#{empty adminDashboardBean.awaitingAssignment}">
+                        <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                            <ui:param name="icon" value="check"/>
+                            <ui:param name="heading" value="Queue is clear"/>
+                            <ui:param name="text" value="Every open complaint has a staff member assigned."/>
+                        </ui:decorate>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not empty adminDashboardBean.awaitingAssignment}">
+                        <div class="table-wrap">
+                            <table class="table table-stack">
+                                <thead>
+                                    <tr><th scope="col">Complaint</th><th scope="col">Category</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr>
+                                </thead>
+                                <tbody>
+                                    <ui:repeat value="#{adminDashboardBean.awaitingAssignment}" var="c">
+                                        <tr>
+                                            <td data-label="Complaint"><span class="cell-title">#{c.title}</span><span class="cell-sub">#{c.complaintCode} &#183; #{c.block}</span></td>
+                                            <td data-label="Category">#{c.categoryName}</td>
+                                            <td data-label="Priority"><span class="prio prio-#{c.priorityCss}">#{c.priorityLabel}</span></td>
+                                            <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                            <td class="cell-actions">
+                                                <h:link outcome="/complaint-review.xhtml" value="Review &amp; assign" styleClass="btn btn-sm">
+                                                    <f:param name="id" value="#{c.id}"/>
+                                                </h:link>
+                                            </td>
+                                        </tr>
+                                    </ui:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                    </ui:fragment>
+                </section>
+
+                <section class="card card-flush" aria-labelledby="recentTitle">
+                    <div class="card-head">
+                        <h2 id="recentTitle">Recent submissions</h2>
+                        <h:link outcome="/admin-complaints.xhtml" value="All complaints" styleClass="btn btn-ghost btn-sm"/>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table table-stack">
+                            <thead>
+                                <tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Reporter</th><th scope="col">Submitted</th><th scope="col">Status</th></tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{adminDashboardBean.recent}" var="c">
+                                    <tr>
+                                        <td data-label="ID">
+                                            <h:link outcome="/complaint-review.xhtml" value="#{c.complaintCode}" styleClass="code">
+                                                <f:param name="id" value="#{c.id}"/>
+                                            </h:link>
+                                        </td>
+                                        <td data-label="Title" class="cell-title">#{c.title}</td>
+                                        <td data-label="Reporter">#{c.userName}</td>
+                                        <td data-label="Submitted" class="nowrap">
+                                            <h:outputText value="#{c.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM, hh:mm a"/></h:outputText>
+                                        </td>
+                                        <td data-label="Status"><span class="pill pill-#{c.statusCss}">#{c.statusLabel}</span></td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <section class="card" aria-labelledby="activityTitle">
+                <div class="card-head"><h2 id="activityTitle">Recent activity</h2></div>
+                <ui:fragment rendered="#{empty adminDashboardBean.activity}">
+                    <p class="muted">Nothing has happened yet.</p>
+                </ui:fragment>
+                <ul class="feed">
+                    <ui:repeat value="#{adminDashboardBean.activity}" var="a">
+                        <li class="dot-#{a.newStatusCss}">
+                            <span class="feed-dot"></span>
+                            <span>
+                                <strong>#{a.updatedByName}</strong>
+                                #{a.statusChange ? 'moved' : 'commented on'}
+                                <h:link outcome="/complaint-review.xhtml" value="#{a.complaintCode}">
+                                    <f:param name="id" value="#{a.complaintId}"/>
+                                </h:link>
+                                #{a.statusChange ? 'to '.concat(a.newStatusLabel) : ''}
+                                <span class="cell-sub">
+                                    <h:outputText value="#{a.createdAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM, hh:mm a"/></h:outputText>
+                                </span>
+                            </span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </section>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

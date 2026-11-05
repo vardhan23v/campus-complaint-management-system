@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="jakarta.faces.passthrough">
+
+<!--
+  The administrator's workbench for one complaint: complaint-review.xhtml?id=7
+  Which action panels appear depends on the status, and AdminService checks
+  every transition again on the server.
+-->
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+    <ui:define name="title">Review complaint</ui:define>
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{complaintReviewBean.id}"/>
+        <f:viewAction action="#{complaintReviewBean.load}"/>
+    </f:metadata>
+
+    <ui:define name="content">
+        <h:link outcome="/admin-complaints.xhtml" styleClass="back-link">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-back"/></svg> All complaints
+        </h:link>
+
+        <ui:fragment rendered="#{empty complaintReviewBean.complaint}">
+            <div class="card">
+                <ui:decorate template="/WEB-INF/includes/empty.xhtml">
+                    <ui:param name="icon" value="search"/>
+                    <ui:param name="heading" value="Complaint not found"/>
+                    <ui:param name="text" value="The link may be incomplete, or the complaint no longer exists."/>
+                </ui:decorate>
+            </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{not empty complaintReviewBean.complaint}">
+            <div class="split">
+                <div class="stack">
+                    <ui:include src="/WEB-INF/includes/complaint-summary.xhtml">
+                        <ui:param name="complaint" value="#{complaintReviewBean.complaint}"/>
+                        <ui:param name="showReporter" value="true"/>
+                    </ui:include>
+
+                    <section class="card" aria-labelledby="historyTitle">
+                        <div class="card-head">
+                            <h2 id="historyTitle">Status history</h2>
+                            <span class="muted small">Append-only &#183; #{complaintReviewBean.history.size()} entries</span>
+                        </div>
+                        <ui:include src="/WEB-INF/includes/timeline.xhtml">
+                            <ui:param name="history" value="#{complaintReviewBean.history}"/>
+                        </ui:include>
+                    </section>
+
+                    <ui:fragment rendered="#{not empty complaintReviewBean.assignments}">
+                        <section class="card card-flush" aria-labelledby="assignTitle">
+                            <div class="card-head"><h2 id="assignTitle">Assignment log</h2></div>
+                            <table class="table table-stack">
+                                <thead><tr><th scope="col">Staff member</th><th scope="col">Assigned by</th><th scope="col">When</th><th scope="col">Note</th></tr></thead>
+                                <tbody>
+                                    <ui:repeat value="#{complaintReviewBean.assignments}" var="a">
+                                        <tr>
+                                            <td data-label="Staff" class="cell-title">#{a.staffName}</td>
+                                            <td data-label="By">#{a.assignedByName}</td>
+                                            <td data-label="When" class="nowrap">
+                                                <h:outputText value="#{a.assignedAt}"><f:convertDateTime type="localDateTime" pattern="dd MMM yyyy, hh:mm a"/></h:outputText>
+                                            </td>
+                                            <td data-label="Note">#{empty a.remarks ? '&#8212;' : a.remarks}</td>
+                                        </tr>
+                                    </ui:repeat>
+                                </tbody>
+                            </table>
+                        </section>
+                    </ui:fragment>
+                </div>
+
+                <aside class="stack" aria-label="Actions">
+
+                    <ui:fragment rendered="#{complaintReviewBean.canReview}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Step 1</p>
+                            <h3>Start the review</h3>
+                            <span class="hint">Tell the reporter the complaint cell has picked this up.</span>
+                            <h:form id="reviewForm">
+                                <div class="field">
+                                    <h:outputLabel for="note" value="Note to the reporter (optional)"/>
+                                    <h:inputTextarea id="note" value="#{complaintReviewBean.statusNote}" styleClass="textarea" rows="2" p:maxlength="1000"/>
+                                </div>
+                                <h:commandButton value="Mark under review" action="#{complaintReviewBean.markUnderReview}" styleClass="btn btn-block"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{complaintReviewBean.canAssign}">
+                        <div class="card action-card">
+                            <p class="eyebrow">#{empty complaintReviewBean.complaint.assignedStaffId ? 'Assign' : 'Reassign'}</p>
+                            <h3>#{empty complaintReviewBean.complaint.assignedStaffId ? 'Assign to maintenance staff' : 'Move to another staff member'}</h3>
+                            <span class="hint">The staff member and the reporter are both notified.</span>
+                            <h:form id="assignForm">
+                                <div class="field">
+                                    <h:outputLabel for="staff" value="Staff member"/>
+                                    <h:selectOneMenu id="staff" value="#{complaintReviewBean.staffId}" styleClass="select"
+                                                     required="true" requiredMessage="Please choose a staff member.">
+                                        <f:selectItem itemLabel="Choose a staff member" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{complaintReviewBean.staff}" var="s" itemValue="#{s.id}"
+                                                       itemLabel="#{s.name}#{empty s.department ? '' : ' &#8212; '.concat(s.department)}"/>
+                                    </h:selectOneMenu>
+                                    <h:message for="staff" styleClass="field-error"/>
+                                </div>
+                                <div class="field">
+                                    <h:outputLabel for="assignNote" value="Instructions (optional)"/>
+                                    <h:inputTextarea id="assignNote" value="#{complaintReviewBean.assignNote}" styleClass="textarea" rows="2"
+                                                     p:maxlength="500" p:placeholder="e.g. Carry a spare capacitor"/>
+                                </div>
+                                <h:commandButton value="#{empty complaintReviewBean.complaint.assignedStaffId ? 'Assign complaint' : 'Reassign complaint'}"
+                                                 action="#{complaintReviewBean.assign}" styleClass="btn btn-block"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{complaintReviewBean.canCloseOrReopen}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Verify the work</p>
+                            <h3>Close or reopen</h3>
+                            <span class="hint">Close once the fix is confirmed. Reopening sends it back to #{complaintReviewBean.complaint.assignedStaffName} and needs a reason.</span>
+                            <h:form id="closeForm">
+                                <div class="field">
+                                    <h:outputLabel for="closeNote" value="Remarks"/>
+                                    <h:inputTextarea id="closeNote" value="#{complaintReviewBean.statusNote}" styleClass="textarea" rows="2" p:maxlength="1000"/>
+                                </div>
+                                <div class="form-actions" style="margin-top:0">
+                                    <h:commandButton value="Close complaint" action="#{complaintReviewBean.close}" styleClass="btn btn-success"
+                                                     onclick="return confirm('Close this complaint? Closed complaints cannot be changed any more.');"/>
+                                    <h:commandButton value="Reopen" action="#{complaintReviewBean.reopen}" styleClass="btn btn-danger"
+                                                     onclick="return confirm('Reopen this complaint and send it back to the staff member?');"/>
+                                </div>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{complaintReviewBean.complaint.status ne 'CLOSED'}">
+                        <div class="card action-card">
+                            <p class="eyebrow">Priority</p>
+                            <h3>Change priority</h3>
+                            <h:form id="priorityForm">
+                                <div class="field">
+                                    <h:outputLabel for="priority" value="Priority" styleClass="sr-only"/>
+                                    <h:selectOneMenu id="priority" value="#{complaintReviewBean.priority}" styleClass="select">
+                                        <f:selectItems value="#{lookup.priorities}" var="pr" itemValue="#{pr}" itemLabel="#{lookup.label(pr)}"/>
+                                    </h:selectOneMenu>
+                                </div>
+                                <h:commandButton value="Update priority" action="#{complaintReviewBean.changePriority}" styleClass="btn btn-secondary btn-block"/>
+                            </h:form>
+                        </div>
+
+                        <div class="card action-card">
+                            <p class="eyebrow">Remarks</p>
+                            <h3>Add an administrative remark</h3>
+                            <span class="hint">Stored in the history and sent to the reporter.</span>
+                            <h:form id="remarkForm">
+                                <div class="field">
+                                    <h:outputLabel for="remark" value="Remark" styleClass="sr-only"/>
+                                    <h:inputTextarea id="remark" value="#{complaintReviewBean.remark}" styleClass="textarea" rows="3"
+                                                     required="true" requiredMessage="Please write the remark first."
+                                                     p:maxlength="1000"/>
+                                    <h:message for="remark" styleClass="field-error"/>
+                                </div>
+                                <h:commandButton value="Add remark" action="#{complaintReviewBean.addRemark}" styleClass="btn btn-secondary btn-block"/>
+                            </h:form>
+                        </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{complaintReviewBean.complaint.status eq 'CLOSED'}">
+                        <div class="card">
+                            <p class="eyebrow">Closed</p>
+                            <p class="muted">This complaint is closed. Its record and history are kept permanently.</p>
+                        </div>
+                    </ui:fragment>
+
+                    <div class="card">
+                        <p class="eyebrow">Reporter feedback</p>
+                        <ui:fragment rendered="#{empty complaintReviewBean.feedback}">
+                            <p class="muted">#{complaintReviewBean.complaint.open ? 'Feedback becomes available once the complaint is resolved.' : 'The reporter has not rated this complaint yet.'}</p>
+                        </ui:fragment>
+                        <ui:fragment rendered="#{not empty complaintReviewBean.feedback}">
+                            <p class="star-text" style="font-size: var(--text-xl)" aria-label="#{complaintReviewBean.feedback.rating} out of 5 stars">#{complaintReviewBean.feedback.stars}</p>
+                            <p class="prose">#{empty complaintReviewBean.feedback.comments ? 'No comment.' : complaintReviewBean.feedback.comments}</p>
+                        </ui:fragment>
+                    </div>
+                </aside>
+            </div>
+        </ui:fragment>
+    </ui:define>
+</ui:composition>
+</html>
